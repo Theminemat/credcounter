@@ -174,17 +174,11 @@
             // Show loading state
             setLoading(true);
             
-            // Send login request to your API
-            fetch(`${API_URL}?action=login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: username,
-                    password: password
-                })
-            })
+            // URL mit Parametern erstellen statt JSON-Body zu verwenden
+            const loginUrl = `${API_URL}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+            
+            // GET-Anfrage statt POST mit JSON
+            fetch(loginUrl)
             .then(response => response.json())
             .then(data => {
                 setLoading(false);
