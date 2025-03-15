@@ -164,6 +164,7 @@ body {
 }
 
 /* New ride counter with increment button */
+/* New ride counter with increment button */
 .ride-counter {
     display: flex;
     align-items: center;
@@ -181,27 +182,20 @@ body {
 }
 
 .increment-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    background-color: white;
-    color: rgb(30, 144, 255);
-    border-radius: 50%;
+    color: white;
     margin-left: 8px;
     cursor: pointer;
     font-size: 16px;
     line-height: 1;
     font-weight: bold;
     border: none;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s ease, background-color 0.2s ease;
+    background: transparent;
+    transition: transform 0.2s ease;
+    padding: 0 2px;
 }
 
 .increment-button:hover {
-    transform: scale(1.1);
-    background-color: #f0f0f0;
+    transform: scale(1.2);
 }
 
 .increment-button:active {
