@@ -413,31 +413,32 @@ function incrementRide(coaster) {
         })
         .then(data => {
             console.log("Increment response:", data);
-            
-            if (data && data.success) {
+    
+            // Überprüfen Sie das 'status'-Feld in der Antwort
+            if (data && data.status === "success") {
                 // Update the coaster object
-                coaster.Ride = (parseInt(coaster.Ride) || 0) + 1;
-                
+                coaster.Ride = data.newCount;
+    
                 // Find the ride counter for this coaster
                 if (targetButton) {
                     const parent = targetButton.parentElement;
                     const rideText = parent.querySelector('span');
                     rideText.textContent = `${coaster.Ride}x`;
-                    
+    
                     // Restore button
                     targetButton.textContent = '+';
                     targetButton.disabled = false;
                 }
-                
+    
                 // Update statistics
                 updateStats(allCoasters);
-                
+    
                 // Show success toast
-                showToast(`Ride count for ${coaster.Name} increased!`);
+                showToast(`Ride count for ${data.coaster} increased!`);
             } else {
                 // Show error
                 showToast("Failed to update ride count");
-                
+    
                 // Restore button if needed
                 if (targetButton) {
                     targetButton.textContent = '+';
