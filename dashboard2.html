@@ -157,16 +157,19 @@
             // Show loader
             document.getElementById('loader-container').style.display = 'flex';
             
-            // Fetch data from API using the authenticated username
-            const apiUrl = `${API_URL}?user=${username}`;
-            
-            // Add auth token to request if your API requires it
+            // Get auth token from localStorage
             const authToken = localStorage.getItem('authToken');
-            const requestOptions = {
-                headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
-            };
             
-            fetch(apiUrl, requestOptions)
+            // Build URL with all parameters in the query string
+            let apiUrl = `${API_URL}?user=${username}`;
+            
+            // Add token to URL parameters if available
+            if (authToken) {
+                apiUrl += `&token=${authToken}`;
+            }
+            
+            // Simple fetch with no custom headers
+            fetch(apiUrl)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`API error: ${response.status}`);
