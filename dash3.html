@@ -62,3 +62,436 @@
     <div id="toast" class="toast"></div>
     <div id="error-message" class="error-message" style="display: none;"></div>
     <div id="coaster-grid" class="coaster-grid"></div>
+    <script>
+    // Configuration
+const API_URL = "https://script.google.com/macros/s/AKfycbwtLoYodTRSDqQjYQQrpysEzfKqJCNLOyRYSqzzBZfe2PXZuqikxt43KaEFpyNqo0SZnQ/exec";
+
+// Elements
+const loaderContainer = document.getElementById('loader-container');
+const errorMessage = document.getElementById('error-message');
+const coasterGrid = document.getElementById('coaster-grid');
+const searchInput = document.getElementById('search-input');
+const parkFilter = document.getElementById('park-filter');
+const manufacturerFilter = document.getElementById('manufacturer-filter');
+const totalCoastersElement = document.getElementById('total-coasters');
+const totalParksElement = document.getElementById('total-parks');
+const totalRidesElement = document.getElementById('total-rides');
+const topManufacturerElement = document.getElementById('top-manufacturer');
+const profileStatsElement = document.getElementById('profile-stats');
+const usernameElement = document.getElementById('username');
+const toastElement = document.getElementById('toast');
+
+// Global data store
+let allCoasters = [];
+let username = '';
+let authToken = '';
+
+// Initialization
+document.addEventListener('DOMContentLoaded', () => {
+    // Check if user is logged in
+    username = localStorage.getItem('creditCountUser');
+    authToken = localStorage.getItem('authToken');
+    const tokenExpiry = localStorage.getItem('tokenExpiry');
+    
+    // If no token or token expired
+    if (!authToken || !username || !tokenExpiry || new Date(tokenExpiry) <= new Date()) {
+        // Redirect to login page
+        window.location.href = '/login.html';
+        return;
+    }
+    
+    // Update UI with username
+    updateUserProfile(username);
+    
+    // Set up event listeners and fetch coaster data
+    setupEventListeners();
+    fetchCoasterData(username);
+});
+
+// Update profile UI with username
+function updateUserProfile(username) {
+    const usernameElement = document.getElementById('username');
+    const profileIcon = document.getElementById('profile-icon');
+    
+    if (usernameElement) {
+        usernameElement.textContent = username;
+    }
+    
+    if (profileIcon) {
+        profileIcon.textContent = username.charAt(0).toUpperCase();
+    }
+    
+    // If you've stored additional user data
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+        const userObj = JSON.parse(userData);
+        // Update any additional profile details here
+    }
+}
+
+// Set up event listeners
+function setupEventListeners() {
+    // Search and filter listeners
+    searchInput.addEventListener('input', filterCoasters);
+    parkFilter.addEventListener('change', filterCoasters);
+    manufacturerFilter.addEventListener('change', filterCoasters);
+    
+    // Add logout button event listener
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', logout);
+    }
+}
+
+// Logout function
+function logout() {
+    // Clear all authentication data
+    localStorage.removeItem('creditCountUser');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('tokenExpiry');
+    localStorage.removeItem('userData');
+    
+    // Redirect to login page
+    window.location.href = '/login.html';
+}
+
+// Fetch data from API
+function fetchCoasterData(username) {
+    // Show loader
+    document.getElementById('loader-container').style.display = 'flex';
+    
+    // Get auth token from localStorage
+    const authToken = localStorage.getItem('authToken');
+    
+    // Build URL with all parameters in the query string
+    let apiUrl = `${API_URL}?user=${username}`;
+    
+    // Add token to URL parameters if available
+    if (authToken) {
+        apiUrl += `&token=${authToken}`;
+    }
+    
+    // Simple fetch with no custom headers
+    fetch(apiUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Data received:", data);
+            
+            if (!data || data.length === 0) {
+                throw new Error('No coaster data found for this user');
+            }
+            
+            // Store the data
+            allCoasters = data;
+            
+            // Process and display the data
+            updateFilterOptions();
+            updateStats(allCoasters);
+            displayCoasters(allCoasters);
+            
+            // Hide loader
+            document.getElementById('loader-container').style.display = 'none';
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            
+            // Hide loader
+            document.getElementById('loader-container').style.display = 'none';
+            
+            // Show error message
+            errorMessage.textContent = `Error loading data: ${error.message}`;
+            errorMessage.style.display = 'block';
+            
+            // If error is unauthorized, redirect to login
+            if (error.message.includes('401') || error.message.includes('unauthorized')) {
+                logout();
+            }
+        });
+}
+
+// Update filter options based on available data
+function updateFilterOptions() {
+    // Clear existing options (keep the first "All" option)
+    while (parkFilter.options.length > 1) parkFilter.remove(1);
+    while (manufacturerFilter.options.length > 1) manufacturerFilter.remove(1);
+    
+    // Get unique parks and manufacturers
+    const parks = [...new Set(allCoasters.map(c => c.Park).filter(Boolean))].sort();
+    const manufacturers = [...new Set(allCoasters.map(c => c.Manufacteuer).filter(Boolean))].sort();
+    
+    // Add options to filters
+    parks.forEach(park => {
+        const option = document.createElement('option');
+        option.value = park;
+        option.textContent = park;
+        parkFilter.appendChild(option);
+    });
+    
+    manufacturers.forEach(manufacturer => {
+        const option = document.createElement('option');
+        option.value = manufacturer;
+        option.textContent = manufacturer;
+        manufacturerFilter.appendChild(option);
+    });
+}
+
+// Update statistics based on coaster data
+function updateStats(coasters) {
+    // Count total coasters
+    totalCoastersElement.textContent = coasters.length;
+    
+    // Count unique parks
+    const uniqueParks = new Set(coasters.map(c => c.Park).filter(Boolean));
+    totalParksElement.textContent = uniqueParks.size;
+    
+    // Calculate total rides
+    const totalRides = coasters.reduce((sum, coaster) => sum + (parseInt(coaster.Ride) || 0), 0);
+    totalRidesElement.textContent = totalRides;
+    
+    // Find top manufacturer
+    const manufacturerCounts = {};
+    coasters.forEach(coaster => {
+        const manufacturer = coaster.Manufacteuer;
+        if (manufacturer) {
+            manufacturerCounts[manufacturer] = (manufacturerCounts[manufacturer] || 0) + 1;
+        }
+    });
+    
+    let topManufacturer = '-';
+    let maxCount = 0;
+    
+    for (const [manufacturer, count] of Object.entries(manufacturerCounts)) {
+        if (count > maxCount) {
+            maxCount = count;
+            topManufacturer = manufacturer;
+        }
+    }
+    
+    topManufacturerElement.textContent = topManufacturer;
+    
+    // Update profile stats
+    profileStatsElement.textContent = `${coasters.length} coasters in ${uniqueParks.size} parks`;
+}
+
+// Display coasters in the grid
+function displayCoasters(coasters) {
+    // Clear the grid
+    coasterGrid.innerHTML = '';
+    
+    if (coasters.length === 0) {
+        errorMessage.textContent = 'No coasters found matching your criteria';
+        errorMessage.style.display = 'block';
+        return;
+    }
+    
+    // Hide any error message
+    errorMessage.style.display = 'none';
+    
+    // Sort coasters by park name
+    coasters.sort((a, b) => {
+        if (a.Park !== b.Park) return a.Park.localeCompare(b.Park);
+        return a.Name.localeCompare(b.Name);
+    });
+    
+    // Create a card for each coaster
+    coasters.forEach((coaster, index) => {
+        const card = document.createElement('div');
+        card.className = 'coaster-card';
+        card.style.setProperty('--index', index);
+        
+        // Create the image section or placeholder
+        const imageDiv = document.createElement('div');
+        imageDiv.className = 'coaster-image';
+        
+        if (coaster.ImgUrl) {
+            imageDiv.style.backgroundImage = `url(${coaster.ImgUrl})`;
+        } else {
+            imageDiv.classList.add('no-image');
+            imageDiv.textContent = 'No Image';
+        }
+        
+        // Create ride counter with increment button
+        const rideCounter = document.createElement('div');
+        rideCounter.className = 'ride-counter';
+        
+        const rideCount = document.createElement('span');
+        rideCount.textContent = `${coaster.Ride || 0}x`;
+        
+        const incrementButton = document.createElement('button');
+        incrementButton.className = 'increment-button';
+        incrementButton.textContent = '+';
+        incrementButton.onclick = (e) => {
+            e.stopPropagation();
+            incrementRide(coaster);
+        };
+        
+        rideCounter.appendChild(rideCount);
+        rideCounter.appendChild(incrementButton);
+        imageDiv.appendChild(rideCounter);
+        
+        // Create details section
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'coaster-details';
+        
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'coaster-name';
+        nameDiv.textContent = coaster.Name || 'Unknown Coaster';
+        
+        const parkDiv = document.createElement('div');
+        parkDiv.className = 'coaster-park';
+        parkDiv.textContent = coaster.Park || 'Unknown Park';
+        
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'coaster-info';
+        
+        const manufacturerSpan = document.createElement('span');
+        manufacturerSpan.textContent = coaster.Manufacteuer || 'Unknown';
+        
+        const modelSpan = document.createElement('span');
+        modelSpan.textContent = coaster.Model || '';
+        
+        infoDiv.appendChild(manufacturerSpan);
+        if (coaster.Model) {
+            infoDiv.appendChild(document.createTextNode(' · '));
+            infoDiv.appendChild(modelSpan);
+        }
+        
+        // Assemble the card
+        detailsDiv.appendChild(nameDiv);
+        detailsDiv.appendChild(parkDiv);
+        detailsDiv.appendChild(infoDiv);
+        
+        card.appendChild(imageDiv);
+        card.appendChild(detailsDiv);
+        
+        coasterGrid.appendChild(card);
+    });
+}
+
+// Function to increment ride count
+function incrementRide(coaster) {
+    // Get button element and replace with spinner
+    const buttons = document.querySelectorAll('.increment-button');
+    let targetButton;
+    
+    buttons.forEach(button => {
+        const parent = button.parentElement;
+        const rideText = parent.querySelector('span').textContent;
+        const rides = parseInt(rideText);
+        if (rides === parseInt(coaster.Ride || 0)) {
+            const cardName = button.closest('.coaster-card').querySelector('.coaster-name').textContent;
+            if (cardName === coaster.Name) {
+                targetButton = button;
+            }
+        }
+    });
+    
+    if (targetButton) {
+        const originalText = targetButton.textContent;
+        targetButton.textContent = '';
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        targetButton.appendChild(spinner);
+        targetButton.disabled = true;
+    }
+    
+    // Build the URL for incrementing ride count
+    const incrementUrl = `${API_URL}?action=incrementRide&username=${encodeURIComponent(username)}&coaster=${encodeURIComponent(coaster.Name)}&token=${encodeURIComponent(authToken)}`;
+    
+    // Send the request
+    fetch(incrementUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Increment response:", data);
+            
+            if (data && data.success) {
+                // Update the coaster object
+                coaster.Ride = (parseInt(coaster.Ride) || 0) + 1;
+                
+                // Find the ride counter for this coaster
+                if (targetButton) {
+                    const parent = targetButton.parentElement;
+                    const rideText = parent.querySelector('span');
+                    rideText.textContent = `${coaster.Ride}x`;
+                    
+                    // Restore button
+                    targetButton.textContent = '+';
+                    targetButton.disabled = false;
+                }
+                
+                // Update statistics
+                updateStats(allCoasters);
+                
+                // Show success toast
+                showToast(`Ride count for ${coaster.Name} increased!`);
+            } else {
+                // Show error
+                showToast("Failed to update ride count");
+                
+                // Restore button if needed
+                if (targetButton) {
+                    targetButton.textContent = '+';
+                    targetButton.disabled = false;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error incrementing ride:', error);
+            showToast("Error updating ride count");
+            
+            // Restore button if needed
+            if (targetButton) {
+                targetButton.textContent = '+';
+                targetButton.disabled = false;
+            }
+        });
+}
+
+// Filter coasters based on search input and dropdown selections
+function filterCoasters() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const selectedPark = parkFilter.value;
+    const selectedManufacturer = manufacturerFilter.value;
+    
+    const filteredCoasters = allCoasters.filter(coaster => {
+        // Check if the coaster matches the search term
+        const matchesSearch = !searchTerm || 
+            (coaster.Name && coaster.Name.toLowerCase().includes(searchTerm)) || 
+            (coaster.Park && coaster.Park.toLowerCase().includes(searchTerm));
+        
+        // Check if the coaster matches the selected park
+        const matchesPark = !selectedPark || coaster.Park === selectedPark;
+        
+        // Check if the coaster matches the selected manufacturer
+        const manufacturer = coaster.Manufacteuer || '';
+        const matchesManufacturer = !selectedManufacturer || manufacturer === selectedManufacturer;
+        
+        return matchesSearch && matchesPark && matchesManufacturer;
+    });
+    
+    // Display the filtered coasters
+    displayCoasters(filteredCoasters);
+}
+
+// Show toast notification
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    
+    // Hide after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+</script>
