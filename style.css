@@ -46,11 +46,13 @@ body {
     text-align: center;
     min-width: 150px;
     flex-grow: 1;
-    transition: transform 0.2s;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
     opacity: 0;
     transform: translateY(15px);
     animation: stats-entrance 0.5s forwards;
     animation-delay: calc(var(--index) * 0.15s);
+    position: relative;
+    overflow: hidden;
 }
 
 @keyframes stats-entrance {
@@ -61,13 +63,39 @@ body {
 }
 
 .stat-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+    background-color: #f8f9ff;
 }
+
+.stat-card:hover::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, rgba(52, 152, 219, 0.1), transparent);
+    pointer-events: none;
+    animation: pulse 1.5s infinite;
+}
+
 
 .stat-card h3 {
     font-size: 2rem;
     color: #3498db;
     margin-bottom: 5px;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 0.9; }
+    100% { opacity: 0.6; }
+}
+
+.stat-card:hover h3 {
+    color: #2980b9;
+    transition: color 0.3s ease;
 }
 
 .stat-card p {
@@ -114,7 +142,9 @@ body {
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                box-shadow 0.4s ease,
+                filter 0.3s ease;
     position: relative;
     opacity: 0;
     transform: translateY(30px) rotateY(10deg);
@@ -130,8 +160,30 @@ body {
 }
 
 .coaster-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-12px) rotateX(2deg) rotateZ(1deg);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15), 0 5px 10px rgba(52, 152, 219, 0.2);
+    filter: brightness(1.03);
+}
+
+.coaster-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 0;
+    background: linear-gradient(to right, rgba(52, 152, 219, 0.3), rgba(155, 89, 182, 0.3));
+    z-index: 1;
+    transition: height 0.3s ease;
+}
+
+.coaster-card:hover::before {
+    height: 5px;
+}
+
+.coaster-card:hover .coaster-image {
+    transform: scale(1.05);
+    transition: transform 0.5s ease;
 }
 
 .coaster-image {
@@ -140,6 +192,8 @@ body {
     background-size: cover;
     background-position: center;
     position: relative;
+    transform: scale(1);
+    transition: transform 0.5s ease;
 }
 
 .coaster-image.no-image {
@@ -236,6 +290,15 @@ body {
 }
 
 @media (max-width: 768px) {
+
+    .stat-card:hover {
+        transform: translateY(-5px) scale(1.02);
+    }
+    
+    .coaster-card:hover {
+        transform: translateY(-8px) rotateX(1deg) rotateZ(0.5deg);
+    }
+    
     .coaster-grid {
         grid-template-columns: 1fr;
     }
