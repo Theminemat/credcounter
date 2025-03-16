@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Count - Registration</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .registration-container {
+            width: 100%;
+            max-width: 450px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        
+        .registration-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .registration-header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .registration-header p {
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        
+        .form-group input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        
+        .validation-icon {
+            position: absolute;
+            right: 15px;
+            top: 42px;
+            color: #ccc;
+            font-size: 1.2rem;
+            display: none;
+        }
+        
+        .validation-icon.valid {
+            display: block;
+            color: #2ecc71;
+        }
+        
+        .password-requirements {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .requirement {
+            margin-top: 3px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .requirement span {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 5px;
+            background-color: #ecf0f1;
+            text-align: center;
+            line-height: 15px;
+            font-size: 0.7rem;
+            color: white;
+        }
+        
+        .requirement.valid span {
+            background-color: #2ecc71;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .checkbox-group input {
+            margin-right: 10px;
+            margin-top: 3px;
+        }
+        
+        .checkbox-group label {
+            font-size: 0.9rem;
+            color: #2c3e50;
+            line-height: 1.4;
+        }
+        
+        .register-button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        
+        .register-button:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+        
+        .register-button:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+        
+        .register-button:disabled {
+            background: linear-gradient(135deg, #a3c6e0, #c2a5ca);
+            cursor: not-allowed;
+        }
+        
+        .error-message, .success-message {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+        }
+        
+        .success-message {
+            color: #2ecc71;
+        }
+        
+        .login-link {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .login-link a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="registration-container">
+        <div class="registration-header">
+            <h1>Credit Count</h1>
+            <p>Create your account to track coaster adventures</p>
+        </div>
+        
+        <form id="registration-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+                <span class="validation-icon valid">✓</span>
+                <div class="password-requirements">
+                    <div class="requirement" id="username-length">
+                        <span>✓</span> At least 5 characters
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required autocomplete="email">
+                <span class="validation-icon valid">✓</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="new-password">
+                <span class="validation-icon valid">✓</span>
+                <div class="password-requirements">
+                    <div class="requirement" id="length-requirement">
+                        <span>✓</span> At least 6 characters
+                    </div>
+                    <div class="requirement" id="uppercase-requirement">
+                        <span>✓</span> At least 1 uppercase letter
+                    </div>
+                    <div class="requirement" id="lowercase-requirement">
+                        <span>✓</span> At least 1 lowercase letter
+                    </div>
+                    <div class="requirement" id="number-requirement">
+                        <span>✓</span> At least 1 number
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirm-password">Confirm Password</label>
+                <input type="password" id="confirm-password" name="confirm-password" required autocomplete="new-password">
+                <span class="validation-icon valid">✓</span>
+                <div class="password-requirements">
+                    <div class="requirement" id="match-requirement">
+                        <span>✓</span> Passwords match
+                    </div>
+                </div>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="privacy-policy" name="privacy-policy" required>
+                <label for="privacy-policy">I accept the privacy policy and terms of service</label>
+            </div>
+            
+            <button type="submit" class="register-button" id="register-button" disabled>
+                <span id="button-text">Register</span>
+                <div class="loader" id="register-loader"></div>
+            </button>
+        </form>
+        
+        <div class="error-message" id="error-message"></div>
+        <div class="success-message" id="success-message"></div>
+        
+        <div class="login-link">
+            Already have an account? <a href="login.html">Log in</a>
+        </div>
+    </div>
+
+    <script>
+      // API URL
+const API_URL = "https://script.google.com/macros/s/AKfycbxI45j7-doEmDvsP6h9I7_-pNT7VuRtbTnEoA68ZsXzWwPjGa7dk2RhPNe3ytdvCwV8JQ/exec";
+
+// DOM elements
+const registrationForm = document.getElementById('registration-form');
+const registerButton = document.getElementById('register-button');
+const buttonText = document.getElementById('button-text');
+const registerLoader = document.getElementById('register-loader');
+const errorMessage = document.getElementById('error-message');
+const successMessage = document.getElementById('success-message');
+
+// Form inputs
+const usernameInput = document.getElementById('username');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const confirmPasswordInput = document.getElementById('confirm-password');
+const privacyCheckbox = document.getElementById('privacy-policy');
+
+// Validation elements
+const usernameValidationIcon = usernameInput.nextElementSibling;
+const emailValidationIcon = emailInput.nextElementSibling;
+const passwordValidationIcon = passwordInput.nextElementSibling;
+const confirmPasswordValidationIcon = confirmPasswordInput.nextElementSibling;
+
+// Requirement elements
+const usernameLengthReq = document.getElementById('username-length');
+const lengthReq = document.getElementById('length-requirement');
+const uppercaseReq = document.getElementById('uppercase-requirement');
+const lowercaseReq = document.getElementById('lowercase-requirement');
+const numberReq = document.getElementById('number-requirement');
+const matchReq = document.getElementById('match-requirement');
+
+// Form validation state
+const validationState = {
+    username: false,
+    email: false,
+    password: false,
+    confirmPassword: false,
+    privacyPolicy: false
+};
+
+// Regex patterns
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Input event listeners
+usernameInput.addEventListener('input', validateUsername);
+emailInput.addEventListener('input', validateEmail);
+passwordInput.addEventListener('input', validatePassword);
+confirmPasswordInput.addEventListener('input', validateConfirmPassword);
+privacyCheckbox.addEventListener('change', validatePrivacyPolicy);
+
+// Form submission
+registrationForm.addEventListener('submit', handleRegistration);
+
+// Validation functions
+function validateUsername() {
+    const username = usernameInput.value.trim();
+    const isValid = username.length >= 5;
+    
+    validationState.username = isValid;
+    
+    usernameValidationIcon.classList.toggle('valid', isValid);
+    usernameLengthReq.classList.toggle('valid', isValid);
+    
+    updateButtonState();
+}
+
+function validateEmail() {
+    const email = emailInput.value.trim();
+    const isValid = emailPattern.test(email);
+    
+    validationState.email = isValid;
+    
+    emailValidationIcon.classList.toggle('valid', isValid);
+    
+    updateButtonState();
+}
+
+function validatePassword() {
+    const password = passwordInput.value;
+    
+    const hasLength = password.length >= 6;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    
+    const isValid = hasLength && hasUppercase && hasLowercase && hasNumber;
+    
+    validationState.password = isValid;
+    
+    lengthReq.classList.toggle('valid', hasLength);
+    uppercaseReq.classList.toggle('valid', hasUppercase);
+    lowercaseReq.classList.toggle('valid', hasLowercase);
+    numberReq.classList.toggle('valid', hasNumber);
+    
+    passwordValidationIcon.classList.toggle('valid', isValid);
+    
+    validateConfirmPassword();  // Re-validate confirm password when password changes
+    updateButtonState();
+}
+
+function validateConfirmPassword() {
+    const password = passwordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
+    
+    const doMatch = password === confirmPassword && confirmPassword !== '';
+    
+    validationState.confirmPassword = doMatch;
+    
+    matchReq.classList.toggle('valid', doMatch);
+    confirmPasswordValidationIcon.classList.toggle('valid', doMatch);
+    
+    updateButtonState();
+}
+
+function validatePrivacyPolicy() {
+    validationState.privacyPolicy = privacyCheckbox.checked;
+    updateButtonState();
+}
+
+function updateButtonState() {
+    const isFormValid = Object.values(validationState).every(state => state === true);
+    registerButton.disabled = !isFormValid;
+}
+
+function handleRegistration(event) {
+    event.preventDefault();
+    
+    // Get form values
+    const username = usernameInput.value.trim();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    
+    // Show loading state
+    setLoading(true);
+    
+    // Create registration URL with parameters
+    const registrationUrl = `${API_URL}?username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+    
+    // Send GET request
+    fetch(registrationUrl)
+    .then(response => response.text())
+    .then(data => {
+        setLoading(false);
+        
+        if (data === "Username already in use") {
+            showError("Username already in use. Please choose another username.");
+        } 
+        else if (data === "Email already in use") {
+            showError("Email already in use. Please use another email address.");
+        }
+        else if (data === "User registered successfully. Check your email for the confirmation code.") {
+            showSuccess("Sending verification mail, please wait...");
+            
+            // Store username and email for verification page
+            localStorage.setItem('pendingUsername', username);
+            localStorage.setItem('pendingEmail', email);
+            
+            // Redirect after 2 seconds
+            setTimeout(() => {
+                window.location.href = '/emailverifycode.html';
+            }, 2000);
+        }
+        else {
+            showError(`Unexpected error: ${data}`);
+        }
+    })
+    .catch(error => {
+        setLoading(false);
+        showError("An error occurred. Please try again later.");
+        console.error("Registration error:", error);
+    });
+}
+
+// Show error message
+function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.style.display = 'block';
+    successMessage.style.display = 'none';
+    
+    // Hide error after 5 seconds
+    setTimeout(() => {
+        errorMessage.style.display = 'none';
+    }, 5000);
+}
+
+// Show success message
+function showSuccess(message) {
+    successMessage.textContent = message;
+    successMessage.style.display = 'block';
+    errorMessage.style.display = 'none';
+}
+
+// Set loading state
+function setLoading(isLoading) {
+    if (isLoading) {
+        buttonText.style.display = 'none';
+        registerLoader.style.display = 'block';
+        registerButton.disabled = true;
+    } else {
+        buttonText.style.display = 'block';
+        registerLoader.style.display = 'none';
+        updateButtonState(); // Re-check form validity to determine button state
+    }
+}
+    </script>
