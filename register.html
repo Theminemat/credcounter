@@ -452,7 +452,7 @@ function handleRegistration(event) {
         // Store username and email for verification page
         localStorage.setItem('pendingUsername', username);
         localStorage.setItem('pendingEmail', email);
-        
+        window.location.href = '/emailverifycode.html';
         // Redirect after 2 seconds
         setTimeout(() => {
             window.location.href = '/emailverifycode.html';
