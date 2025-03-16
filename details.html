@@ -111,6 +111,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            margin-left: 10px;
         }
 
         .increment-large:hover {
@@ -190,6 +191,7 @@
 
         <div class="ride-count-large">
             <span id="ride-count-display">0 rides</span>
+            <button id="decrement-ride-button" class="increment-large">-</button>
             <button id="increment-ride-button" class="increment-large">+</button>
         </div>
 
@@ -201,7 +203,7 @@
     <script>
       // Constants
 const API_URL = "https://script.google.com/macros/s/AKfycbzOgsXQNM1Cz1kBIvMyOs3UjMT9hxvv6WW5LyEvshD6VIXCZhRs2uJlORJQiAkoLWmwzQ/exec";
-const INCREMENT_API = "https://script.google.com/macros/s/AKfycbzc__Z7Wex8sV1G9Ie97KqTbJ4vzNkGj_FXMKabFUmJYFjK3AQu-MVuSQxW_pPSAYG_ZA/exec";
+const INCREMENT_API = "https://script.google.com/macros/s/AKfycbwDy38TlViyaZQzTUiT-j8Nmtu_pZLZ0QdL8pP9dFb756MhS7epbMq5d1oNxEpvG-MQ/exec";
 
 // Elements
 const loaderContainer = document.getElementById('loader-container');
