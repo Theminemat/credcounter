@@ -285,7 +285,7 @@
 
     <script>
       // API URL
-const API_URL = "https://script.google.com/macros/s/AKfycbxrn8UYEstQMZCM71FKrS24RebNGDFExs2eVx9XS08JOWisOjfw-5u82qeMr2K1dAo-cw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxGGRC2jlj3BSKNASnNqXkcDOONXZbXnjs0QW3DlCYG0nMLJgMs5Z_pfnmPz-eE_7oNSw/exec";
 
 // DOM elements
 const registrationForm = document.getElementById('registration-form');
@@ -429,28 +429,39 @@ function handleRegistration(event) {
     .then(data => {
         setLoading(false);
         
-        if (data === "Username already in use") {
+        // Parse the response as JSON
+    const responseData = JSON.parse(data);
+    
+    // Check the response structure
+    if (responseData.status === "error") {
+        // Handle error cases
+        if (responseData.message === "Username already in use") {
             showError("Username already in use. Please choose another username.");
         } 
-        else if (data === "Email already in use") {
+        else if (responseData.message === "Email already in use") {
             showError("Email already in use. Please use another email address.");
         }
-        else if (data === "User registered successfully. Check your email for the confirmation code.") {
-            showSuccess("Sending verification mail, please wait...");
-            
-            // Store username and email for verification page
-            localStorage.setItem('pendingUsername', username);
-            localStorage.setItem('pendingEmail', email);
-            
-            // Redirect after 2 seconds
-            setTimeout(() => {
-                window.location.href = '/emailverifycode.html';
-            }, 2000);
-        }
         else {
-            showError(`Unexpected error: ${data}`);
+            showError(`Unexpected error: ${responseData.message}`);
         }
-    })
+    } 
+    else if (responseData.status === "success" && 
+             responseData.message === "User registered successfully. Check your email for the confirmation code.") {
+        showSuccess("Sending verification mail, please wait...");
+        
+        // Store username and email for verification page
+        localStorage.setItem('pendingUsername', username);
+        localStorage.setItem('pendingEmail', email);
+        
+        // Redirect after 2 seconds
+        setTimeout(() => {
+            window.location.href = '/emailverifycode.html';
+        }, 2000);
+    }
+    else {
+        showError(`Unexpected error: ${data}`);
+    }
+
     .catch(error => {
         setLoading(false);
         showError("An error occurred. Please try again later.");
