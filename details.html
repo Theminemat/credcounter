@@ -97,6 +97,11 @@
             font-size: 1.5rem;
             font-weight: bold;
         }
+        
+        .buttons-container {
+            display: flex;
+            gap: 10px;
+        }
 
         .increment-large {
             background-color: rgba(255, 255, 255, 0.2);
@@ -111,7 +116,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-left: 10px;
         }
 
         .increment-large:hover {
@@ -153,6 +157,20 @@
             color: #a0a0a0;
             font-size: 2rem;
         }
+        
+        /* Add spinner animation */
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -191,17 +209,18 @@
 
         <div class="ride-count-large">
             <span id="ride-count-display">0 rides</span>
-            <button id="decrement-ride-button" class="increment-large">-</button>
-            <button id="increment-ride-button" class="increment-large">+</button>
+            <div class="buttons-container">
+                <button id="decrement-ride-button" class="increment-large">-</button>
+                <button id="increment-ride-button" class="increment-large">+</button>
+            </div>
         </div>
 
         <div class="coaster-stats" id="coaster-stats">
             <!-- Stats will be inserted here -->
         </div>
     </div>
-
     <script>
-      // Constants
+        // Constants
 const API_URL = "https://script.google.com/macros/s/AKfycbzOgsXQNM1Cz1kBIvMyOs3UjMT9hxvv6WW5LyEvshD6VIXCZhRs2uJlORJQiAkoLWmwzQ/exec";
 const INCREMENT_API = "https://script.google.com/macros/s/AKfycbwDy38TlViyaZQzTUiT-j8Nmtu_pZLZ0QdL8pP9dFb756MhS7epbMq5d1oNxEpvG-MQ/exec";
 
@@ -213,6 +232,7 @@ const coasterHeader = document.getElementById('coaster-header');
 const coasterStats = document.getElementById('coaster-stats');
 const rideCountDisplay = document.getElementById('ride-count-display');
 const incrementRideButton = document.getElementById('increment-ride-button');
+const decrementRideButton = document.getElementById('decrement-ride-button');
 const toastElement = document.getElementById('toast');
 
 // Global coaster data
@@ -282,7 +302,6 @@ function setupEventListeners() {
     });
 
     // Set up decrement ride button
-    const decrementRideButton = document.getElementById('decrement-ride-button');
     decrementRideButton.addEventListener('click', () => {
         decrementRide(coasterData.Name);
     });
@@ -530,4 +549,5 @@ function showError(message) {
     errorMessage.textContent = message;
     errorMessage.style.display = 'block';
 }
+        
     </script>
