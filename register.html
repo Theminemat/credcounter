@@ -461,7 +461,7 @@ function handleRegistration(event) {
     else {
         showError(`Unexpected error: ${data}`);
     }
-
+    })
     .catch(error => {
         setLoading(false);
         showError("An error occurred. Please try again later.");
