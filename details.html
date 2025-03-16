@@ -280,6 +280,12 @@ function setupEventListeners() {
     incrementRideButton.addEventListener('click', () => {
         incrementRide(coasterData.Name);
     });
+
+    // Set up decrement ride button
+    const decrementRideButton = document.getElementById('decrement-ride-button');
+    decrementRideButton.addEventListener('click', () => {
+        decrementRide(coasterData.Name);
+    });
 }
 
 // Logout function
@@ -407,7 +413,56 @@ function generateStatsHTML(coaster) {
         </div>
     `).join('');
 }
+        
+function decrementRide(coasterName) {
+    // Replace button content with spinner
+    const originalText = decrementRideButton.textContent;
+    decrementRideButton.textContent = '';
+    const spinner = document.createElement('div');
+    spinner.className = 'spinner';
+    decrementRideButton.appendChild(spinner);
+    decrementRideButton.disabled = true;
 
+    // Build the URL for decrementing ride count
+    const decrementUrl = `${INCREMENT_API}?action=decrementRide&username=${encodeURIComponent(username)}&coaster=${encodeURIComponent(coasterName)}&token=${encodeURIComponent(authToken)}`;
+
+    // Send the request
+    fetch(decrementUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Restore button
+            decrementRideButton.textContent = originalText;
+            decrementRideButton.disabled = false;
+
+            if (data.status === 'success') {
+                // Update the ride count
+                coasterData.Ride = data.newCount;
+                rideCountDisplay.textContent = `${data.newCount} rides`;
+
+                // Show success toast
+                showToast(`Ride count for ${coasterName} decreased!`);
+            } else {
+                // Show error
+                showToast('Failed to update ride count');
+            }
+        })
+        .catch(error => {
+            console.error('Error decrementing ride:', error);
+
+            // Restore button
+            decrementRideButton.textContent = originalText;
+            decrementRideButton.disabled = false;
+
+            // Show error toast
+            showToast(`Error: ${error.message}`);
+        });
+}
+        
 // Increment ride count
 function incrementRide(coasterName) {
     // Replace button content with spinner
