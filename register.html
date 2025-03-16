@@ -421,7 +421,7 @@ function handleRegistration(event) {
     setLoading(true);
     
     // Create registration URL with parameters
-    const registrationUrl = `${API_URL}?username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+    const registrationUrl = `${API_URL}?username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&action=register&password=${encodeURIComponent(password)}`;
     
     // Send GET request
     fetch(registrationUrl)
