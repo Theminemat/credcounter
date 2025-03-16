@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Count - Coaster Details</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Additional styles for details page */
+        .coaster-details-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .coaster-header {
+            position: relative;
+            height: 280px;
+            overflow: hidden;
+        }
+
+        .coaster-header-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.7);
+        }
+
+        .header-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            color: white;
+        }
+
+        .header-overlay h2 {
+            font-size: 2.2rem;
+            margin-bottom: 5px;
+        }
+
+        .header-overlay p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .coaster-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .stat-item {
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f5f7fa;
+            transition: transform 0.2s;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-item label {
+            display: block;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .stat-item span {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .ride-count-large {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 20px;
+        }
+
+        .ride-count-large span {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .increment-large {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            width: 36px;
+            height: 36px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .increment-large:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            margin-bottom: 20px;
+        }
+
+        .back-button:before {
+            content: "←";
+            margin-right: 8px;
+        }
+
+        .back-button:hover {
+            background-color: #2980b9;
+        }
+
+        .no-image-large {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e0e0e0;
+            color: #a0a0a0;
+            font-size: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Credit Counter</h1>
+        <p>Rollercoaster cred counter by theminemat</p>
+    </div>
+
+    <div class="user-profile">
+        <div class="profile-icon" id="profile-icon">T</div>
+        <div class="profile-info">
+            <div class="profile-name" id="username">Loading...</div>
+            <div class="profile-stats" id="profile-stats">Loading stats...</div>
+        </div>
+        <button id="logout-button" class="logout-button">Logout</button>
+    </div>
+
+    <a href="index.html" class="back-button">Back to Coasters</a>
+
+    <div id="loader-container" class="loader-container">
+        <div class="loader">
+            <div class="loader-inner one"></div>
+            <div class="loader-inner two"></div>
+            <div class="loader-inner three"></div>
+            <div class="loader-text">Loading coaster details...</div>
+        </div>
+    </div>
+
+    <div id="error-message" class="error-message" style="display: none;"></div>
+    <div id="toast" class="toast"></div>
+
+    <div id="coaster-details-container" class="coaster-details-container" style="display: none;">
+        <div class="coaster-header" id="coaster-header">
+            <!-- Image will be inserted here -->
+        </div>
+
+        <div class="ride-count-large">
+            <span id="ride-count-display">0 rides</span>
+            <button id="increment-ride-button" class="increment-large">+</button>
+        </div>
+
+        <div class="coaster-stats" id="coaster-stats">
+            <!-- Stats will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+      // Constants
+const API_URL = "https://script.google.com/macros/s/AKfycbzOgsXQNM1Cz1kBIvMyOs3UjMT9hxvv6WW5LyEvshD6VIXCZhRs2uJlORJQiAkoLWmwzQ/exec";
+const INCREMENT_API = "https://script.google.com/macros/s/AKfycbzc__Z7Wex8sV1G9Ie97KqTbJ4vzNkGj_FXMKabFUmJYFjK3AQu-MVuSQxW_pPSAYG_ZA/exec";
+
+// Elements
+const loaderContainer = document.getElementById('loader-container');
+const errorMessage = document.getElementById('error-message');
+const coasterDetailsContainer = document.getElementById('coaster-details-container');
+const coasterHeader = document.getElementById('coaster-header');
+const coasterStats = document.getElementById('coaster-stats');
+const rideCountDisplay = document.getElementById('ride-count-display');
+const incrementRideButton = document.getElementById('increment-ride-button');
+const toastElement = document.getElementById('toast');
+
+// Global coaster data
+let coasterData = null;
+let username = '';
+let authToken = '';
+
+// Initialization
+document.addEventListener('DOMContentLoaded', () => {
+    // Check if user is logged in
+    username = localStorage.getItem('creditCountUser');
+    authToken = localStorage.getItem('authToken');
+    const tokenExpiry = localStorage.getItem('tokenExpiry');
+    
+    // If no token or token expired
+    if (!authToken || !username || !tokenExpiry || new Date(tokenExpiry) <= new Date()) {
+        // Redirect to login page
+        window.location.href = '/login.html';
+        return;
+    }
+    
+    // Update UI with username
+    updateUserProfile(username);
+    
+    // Set up event listeners
+    setupEventListeners();
+    
+    // Get coaster name from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const coasterName = urlParams.get('coaster');
+    
+    if (!coasterName) {
+        showError('No coaster specified');
+        loaderContainer.style.display = 'none';
+        return;
+    }
+    
+    // Fetch coaster details
+    fetchCoasterDetails(coasterName);
+});
+
+// Update profile UI with username
+function updateUserProfile(username) {
+    const usernameElement = document.getElementById('username');
+    const profileIcon = document.getElementById('profile-icon');
+    
+    if (usernameElement) {
+        usernameElement.textContent = username;
+    }
+    
+    if (profileIcon) {
+        profileIcon.textContent = username.charAt(0).toUpperCase();
+    }
+}
+
+// Set up event listeners
+function setupEventListeners() {
+    // Set up logout button
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', logout);
+    }
+    
+    // Set up increment ride button
+    incrementRideButton.addEventListener('click', () => {
+        incrementRide(coasterData.Name);
+    });
+}
+
+// Logout function
+function logout() {
+    // Clear all authentication data
+    localStorage.removeItem('creditCountUser');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('tokenExpiry');
+    localStorage.removeItem('userData');
+    
+    // Redirect to login page
+    window.location.href = '/login.html';
+}
+
+// Fetch coaster details from API
+function fetchCoasterDetails(coasterName) {
+    // Show loader
+    loaderContainer.style.display = 'flex';
+    coasterDetailsContainer.style.display = 'none';
+    errorMessage.style.display = 'none';
+    
+    // Build the URL for getting coaster details
+    const detailsUrl = `${API_URL}?action=getDetails&username=${encodeURIComponent(username)}&coaster=${encodeURIComponent(coasterName)}&token=${encodeURIComponent(authToken)}`;
+    
+    // Send the request
+    fetch(detailsUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Hide loader
+            loaderContainer.style.display = 'none';
+            
+            if (data.status === 'error') {
+                if (data.message === 'Invalid token') {
+                    // Redirect to error page
+                    window.location.href = 'tools.theminemat.de/error';
+                } else {
+                    showError(data.message || 'Failed to load coaster details');
+                }
+                return;
+            }
+            
+            // Store coaster data
+            coasterData = data.coaster;
+            
+            // Update profile stats
+            document.getElementById('profile-stats').textContent = `Viewing: ${coasterData.Name}`;
+            
+            // Display coaster details
+            displayCoasterDetails(coasterData);
+            
+            // Show the details container
+            coasterDetailsContainer.style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error fetching details:', error);
+            
+            // Hide loader
+            loaderContainer.style.display = 'none';
+            
+            // Show error message
+            showError(`Error loading details: ${error.message}`);
+            
+            // Check if error is related to authentication
+            if (error.message.includes('401') || error.message.includes('unauthorized')) {
+                logout();
+            }
+        });
+}
+
+// Display coaster details in the UI
+function displayCoasterDetails(coaster) {
+    // Update header image
+    if (coaster.ImgUrl) {
+        coasterHeader.innerHTML = `
+            <img src="${coaster.ImgUrl}" class="coaster-header-image" alt="${coaster.Name}">
+            <div class="header-overlay">
+                <h2>${coaster.Name}</h2>
+                <p>${coaster.Park}, ${coaster.Country || 'Unknown location'}</p>
+            </div>
+        `;
+    } else {
+        coasterHeader.innerHTML = `
+            <div class="no-image-large">No Image Available</div>
+            <div class="header-overlay">
+                <h2>${coaster.Name}</h2>
+                <p>${coaster.Park}, ${coaster.Country || 'Unknown location'}</p>
+            </div>
+        `;
+    }
+    
+    // Update ride count
+    rideCountDisplay.textContent = `${coaster.Ride || 0} rides`;
+    
+    // Create stats elements
+    const statsHTML = generateStatsHTML(coaster);
+    coasterStats.innerHTML = statsHTML;
+}
+
+// Generate HTML for coaster stats
+function generateStatsHTML(coaster) {
+    const stats = [
+        { label: 'Park', value: coaster.Park || 'Unknown' },
+        { label: 'Country', value: coaster.Country || 'Unknown' },
+        { label: 'Manufacturer', value: coaster.Manufacturer || 'Unknown' },
+        { label: 'Model', value: coaster.Model || 'Unknown' },
+        { label: 'Type', value: coaster.Type || 'Unknown' },
+        { label: 'Design', value: coaster.Design || 'Unknown' },
+        { label: 'Length', value: coaster.Length || 'Unknown' },
+        { label: 'Height', value: coaster.Height || 'Unknown' },
+        { label: 'Speed', value: coaster.Speed || 'Unknown' },
+        { label: 'Inversions', value: coaster.Inversions || '0' },
+        { label: 'Duration', value: coaster.Duration || 'Unknown' },
+        { label: 'Opened', value: coaster.Opened || 'Unknown' }
+    ];
+    
+    return stats.map(stat => `
+        <div class="stat-item">
+            <label>${stat.label}</label>
+            <span>${stat.value}</span>
+        </div>
+    `).join('');
+}
+
+// Increment ride count
+function incrementRide(coasterName) {
+    // Replace button content with spinner
+    const originalText = incrementRideButton.textContent;
+    incrementRideButton.textContent = '';
+    const spinner = document.createElement('div');
+    spinner.className = 'spinner';
+    incrementRideButton.appendChild(spinner);
+    incrementRideButton.disabled = true;
+    
+    // Build the URL for incrementing ride count
+    const incrementUrl = `${INCREMENT_API}?action=incrementRide&username=${encodeURIComponent(username)}&coaster=${encodeURIComponent(coasterName)}&token=${encodeURIComponent(authToken)}`;
+    
+    // Send the request
+    fetch(incrementUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Restore button
+            incrementRideButton.textContent = originalText;
+            incrementRideButton.disabled = false;
+            
+            if (data.status === 'success') {
+                // Update the ride count
+                coasterData.Ride = data.newCount;
+                rideCountDisplay.textContent = `${data.newCount} rides`;
+                
+                // Show success toast
+                showToast(`Ride count for ${coasterName} increased!`);
+            } else {
+                // Show error
+                showToast('Failed to update ride count');
+            }
+        })
+        .catch(error => {
+            console.error('Error incrementing ride:', error);
+            
+            // Restore button
+            incrementRideButton.textContent = originalText;
+            incrementRideButton.disabled = false;
+            
+            // Show error toast
+            showToast(`Error: ${error.message}`);
+        });
+}
+
+// Show toast notification
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    
+    // Hide after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// Show error message
+function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.style.display = 'block';
+}
+    </script>
