@@ -344,6 +344,7 @@ function fetchCoasterDetails(coasterName) {
             if (data.status === 'error') {
                 if (data.message === 'Invalid token') {
                     // Redirect to error page
+                    logout();
                     window.location.href = '/login';
                 } else {
                     showError(data.message || 'Failed to load coaster details');
