@@ -344,7 +344,7 @@ function fetchCoasterDetails(coasterName) {
             if (data.status === 'error') {
                 if (data.message === 'Invalid token') {
                     // Redirect to error page
-                    window.location.href = '/intern/statusmessage?mode=error&title=Session+expired&message=Looks+like+your+session+has+expired.%0AThat+isn%27t+a+problem%2C+just+log+back+in%21&animation=4&textanimation=2&button1=Login&link1=%2Flogin&button2=Sign+Up&link2=%2Fregister';
+                    window.location.href = '/login';
                 } else {
                     showError(data.message || 'Failed to load coaster details');
                 }
