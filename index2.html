@@ -109,6 +109,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up event listeners
     setupEventListeners();
     
+    // Always hide the loader initially
+    loaderContainer.style.display = 'none';
+    
     // Try to load cached data first
     const cachedData = loadCachedCoasterData();
     
@@ -123,9 +126,89 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchCoasterDataInBackground(username);
     } else {
         // If no cached data, show loader and fetch
+        loaderContainer.style.display = 'flex';
         fetchCoasterData(username);
     }
 });
+
+// Make sure fetchCoasterDataInBackground never shows the loader
+function fetchCoasterDataInBackground(username) {
+    // Set background loading flag
+    isBackgroundLoading = true;
+    
+    // Update profile stats to show loading indicator
+    updateProfileStatusWithLoading();
+    
+    // Get auth token from localStorage
+    const authToken = localStorage.getItem('authToken');
+    
+    // Build URL with all parameters
+    let apiUrl = `${API_URL}?user=${username}`;
+    if (authToken) {
+        apiUrl += `&token=${authToken}`;
+    }
+    
+    // Never show the loader for background loading
+    
+    // Simple fetch without showing loader
+    fetch(apiUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Background data received:", data);
+            
+            if (!data || data.length === 0) {
+                throw new Error('No coaster data found for this user');
+            }
+            
+            // Check if data has changed
+            const dataChanged = hasDataChanged(allCoasters, data);
+            
+            if (dataChanged) {
+                console.log("Data has changed, updating UI");
+                
+                // Update global data
+                allCoasters = data;
+                
+                // Save to cache
+                saveCoasterDataToCache(data);
+                
+                // Update UI
+                updateFilterOptions();
+                updateStats(allCoasters);
+                displayCoasters(allCoasters);
+                
+                // Show small notification
+                showToast("Coaster data updated!");
+            } else {
+                console.log("Data hasn't changed");
+            }
+            
+            // Reset background loading flag
+            isBackgroundLoading = false;
+            
+            // Reset profile stats
+            updateProfileStats(allCoasters);
+        })
+        .catch(error => {
+            console.error('Error fetching background data:', error);
+            
+            // Reset background loading flag
+            isBackgroundLoading = false;
+            
+            // Reset profile stats
+            updateProfileStats(allCoasters);
+            
+            // If error is unauthorized, redirect to login
+            if (error.message.includes('401') || error.message.includes('unauthorized')) {
+                logout();
+            }
+        });
+}
 
 // Update profile UI with username
 function updateUserProfile(username) {
