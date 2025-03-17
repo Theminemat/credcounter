@@ -277,26 +277,8 @@
             
             // If token exists and is still valid
             if (authToken && tokenExpiry && new Date(tokenExpiry) > new Date()) {
-                let tempuser = localStorage.getItem('creditCountUser');
-                let temptoken = localStorage.getItem('authToken');
-                const detailsUrl = `${API_URL}?action=getDetails&username=${encodeURIComponent(tempuser)}&coaster=test&token=${encodeURIComponent(temptoken)}`;
-    
-                // Send the request
-                fetch(detailsUrl)
-                    .then(response => {
-                        return response.json();
-                    })
-                    .then(data => {
-                    
-                        if (data.status === 'error') {
-                            if (data.message === 'Invalid token') {
-                                    
-                            } else {
-                                //redirect to dashboard if calid token is given
-                                window.location.href = '/index.html';
-                            }
-                    
-                        }                
+                // Redirect to dashboard
+                window.location.href = '/index.html';
             }
         });
     </script>
