@@ -1,1 +1,604 @@
-rf
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Count - Email Verification</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .verification-container {
+            width: 100%;
+            max-width: 450px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        
+        .verification-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .verification-header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .verification-header p {
+            color: #7f8c8d;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        
+        .verification-subheader {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .user-info {
+            background-color: #f5f7fa;
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .user-info p {
+            color: #2c3e50;
+            font-size: 0.9rem;
+            margin: 5px 0;
+        }
+        
+        .code-input-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .code-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .separator {
+            display: flex;
+            align-items: center;
+            font-size: 24px;
+            color: #7f8c8d;
+            margin: 0 5px;
+        }
+        
+        .code-input {
+            width: 45px;
+            height: 55px;
+            border: none;
+            border-bottom: 2px solid #ddd;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+            color: #2c3e50;
+            background-color: transparent;
+            transition: border-color 0.3s;
+        }
+        
+        .code-input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        
+        .verify-button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            margin-bottom: 15px;
+        }
+        
+        .verify-button:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+        
+        .verify-button:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+        
+        .verify-button:disabled {
+            background: linear-gradient(135deg, #a3c6e0, #c2a5ca);
+            cursor: not-allowed;
+        }
+        
+        .resend-button {
+            width: 100%;
+            padding: 12px;
+            background-color: transparent;
+            color: #3498db;
+            border: 1px solid #3498db;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .resend-button:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .resend-button:active {
+            transform: translateY(1px);
+        }
+        
+        .error-message, .success-message {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+        }
+        
+        .success-message {
+            color: #2ecc71;
+        }
+        
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease-out;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal.show .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .modal-icon {
+            font-size: 60px;
+            color: #2ecc71;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .modal-text {
+            font-size: 1rem;
+            margin-bottom: 20px;
+            color: #7f8c8d;
+        }
+        
+        .modal-button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        
+        .modal-button:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="verification-container">
+        <div class="verification-header">
+            <h1>Credit Count</h1>
+            <p>Email Verification</p>
+        </div>
+        
+        <div class="verification-subheader">
+            Please enter the 6-digit verification code sent to your email
+        </div>
+        
+        <div class="user-info">
+            <p>Username: <span id="username-display">Loading...</span></p>
+            <p>Email: <span id="email-display">Loading...</span></p>
+        </div>
+        
+        <div class="code-input-container">
+            <div class="code-group">
+                <input type="text" class="code-input" maxlength="1" data-index="0" inputmode="numeric" pattern="[0-9]*">
+                <input type="text" class="code-input" maxlength="1" data-index="1" inputmode="numeric" pattern="[0-9]*">
+                <input type="text" class="code-input" maxlength="1" data-index="2" inputmode="numeric" pattern="[0-9]*">
+            </div>
+            <div class="separator">-</div>
+            <div class="code-group">
+                <input type="text" class="code-input" maxlength="1" data-index="3" inputmode="numeric" pattern="[0-9]*">
+                <input type="text" class="code-input" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]*">
+                <input type="text" class="code-input" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]*">
+            </div>
+        </div>
+        
+        <button id="verify-button" class="verify-button" disabled>
+            <span id="button-text">Verify</span>
+            <div class="loader" id="verify-loader"></div>
+        </button>
+        
+        <button id="resend-button" class="resend-button">Resend Code</button>
+        
+        <div class="error-message" id="error-message"></div>
+        <div class="success-message" id="success-message"></div>
+    </div>
+    
+    <!-- Success Modal -->
+    <div class="modal" id="success-modal">
+        <div class="modal-content">
+            <div class="modal-icon">✓</div>
+            <h2 class="modal-title">Verification Successful</h2>
+            <p class="modal-text">Your email has been verified successfully. You can now log in to your account.</p>
+            <button class="modal-button" id="login-button">Log In</button>
+        </div>
+    </div>
+
+    <script>
+      // API URLs
+const VERIFY_API_URL = "https://script.google.com/macros/s/AKfycbz8cDQrf7hLRWe6LBe59R17J5IETXkNnTDJdEE-EUROOFizVYtK9OOYAsAk11p2UtbF/exec";
+const RESEND_API_URL = "https://script.google.com/macros/s/AKfycbxGGRC2jlj3BSKNASnNqXkcDOONXZbXnjs0QW3DlCYG0nMLJgMs5Z_pfnmPz-eE_7oNSw/exec";
+
+// DOM elements
+const codeInputs = document.querySelectorAll('.code-input');
+const verifyButton = document.getElementById('verify-button');
+const resendButton = document.getElementById('resend-button');
+const buttonText = document.getElementById('button-text');
+const verifyLoader = document.getElementById('verify-loader');
+const errorMessage = document.getElementById('error-message');
+const successMessage = document.getElementById('success-message');
+const successModal = document.getElementById('success-modal');
+const loginButton = document.getElementById('login-button');
+const usernameDisplay = document.getElementById('username-display');
+const emailDisplay = document.getElementById('email-display');
+
+// Get user info from localStorage
+const pendingUsername = localStorage.getItem('pendingUsername');
+const pendingEmail = localStorage.getItem('pendingEmail');
+
+// Cooldown timer variables
+let cooldownTime = 20; // in seconds
+let cooldownTimer;
+let isInCooldown = true;
+
+// Display user info
+if (pendingUsername && pendingEmail) {
+    usernameDisplay.textContent = pendingUsername;
+    emailDisplay.textContent = pendingEmail;
+} else {
+    // Handle case where user arrives without proper setup
+    usernameDisplay.textContent = 'Not available';
+    emailDisplay.textContent = 'Not available';
+    showError("User information not found. Please try registering again.");
+}
+
+// Initialize code input fields
+codeInputs.forEach((input, index) => {
+    // Focus on first input when page loads
+    if (index === 0) {
+        setTimeout(() => {
+            input.focus();
+        }, 500);
+    }
+    
+    // Handle input changes
+    input.addEventListener('input', (e) => {
+        const value = e.target.value;
+        
+        // Ensure only digits are entered
+        if (!/^\d*$/.test(value)) {
+            e.target.value = '';
+            return;
+        }
+        
+        // Auto-focus to next input
+        if (value !== '' && index < codeInputs.length - 1) {
+            codeInputs[index + 1].focus();
+        }
+        
+        // Check if all inputs are filled
+        checkVerifyButtonState();
+    });
+    
+    // Handle key presses
+    input.addEventListener('keydown', (e) => {
+        // Handle backspace
+        if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
+            codeInputs[index - 1].focus();
+            codeInputs[index - 1].value = '';
+            checkVerifyButtonState();
+        }
+        
+        // Handle left arrow
+        if (e.key === 'ArrowLeft' && index > 0) {
+            e.preventDefault();
+            codeInputs[index - 1].focus();
+        }
+        
+        // Handle right arrow
+        if (e.key === 'ArrowRight' && index < codeInputs.length - 1) {
+            e.preventDefault();
+            codeInputs[index + 1].focus();
+        }
+    });
+    
+    // Handle paste event
+    input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pasteData = e.clipboardData.getData('text').trim();
+        
+        // Check if pasted content is all digits
+        if (!/^\d+$/.test(pasteData)) {
+            return;
+        }
+        
+        // Fill input fields with pasted digits
+        const digits = pasteData.split('').slice(0, 6);
+        
+        digits.forEach((digit, digitIndex) => {
+            if (digitIndex < codeInputs.length) {
+                codeInputs[digitIndex].value = digit;
+            }
+        });
+        
+        // Focus on next empty input or the last one
+        const nextEmptyIndex = digits.length < codeInputs.length ? digits.length : codeInputs.length - 1;
+        codeInputs[nextEmptyIndex].focus();
+        
+        checkVerifyButtonState();
+    });
+});
+
+// Button event listeners
+verifyButton.addEventListener('click', handleVerification);
+resendButton.addEventListener('click', handleResendCode);
+loginButton.addEventListener('click', () => {
+    window.location.href = '/login.html';
+});
+
+// Initialize resend button cooldown when page loads
+startCooldown();
+
+// Check if all inputs are filled to enable verify button
+function checkVerifyButtonState() {
+    const allFilled = Array.from(codeInputs).every(input => input.value !== '');
+    verifyButton.disabled = !allFilled;
+}
+
+// Handle verification
+function handleVerification() {
+    // Get verification code from inputs
+    const code = Array.from(codeInputs).map(input => input.value).join('');
+    
+    // Show loading state
+    setLoading(true);
+    
+    // Create verification URL with parameters
+    const verificationUrl = `${VERIFY_API_URL}?code=${code}&action=verifyMail`;
+    
+    // Send GET request
+    fetch(verificationUrl)
+        .then(response => response.text())
+        .then(data => {
+            // Parse the response as JSON
+            try {
+                const responseData = JSON.parse(data);
+                
+                // Check the response status
+                if (responseData.status === "error") {
+                    if (responseData.message === "Invalid confirmation code") {
+                        showError("Invalid confirmation code. Please try again.");
+                    } else {
+                        showError(`Error: ${responseData.message}`);
+                    }
+                } else if (responseData.status === "success" && 
+                           responseData.message === "Registration confirmed successfully") {
+                    // Show success modal
+                    showSuccessModal();
+                } else {
+                    showError("Unexpected response. Please try again.");
+                }
+            } catch (error) {
+                showError("Failed to process the response. Please try again.");
+                console.error("Parse error:", error);
+            }
+            
+            setLoading(false);
+        })
+        .catch(error => {
+            setLoading(false);
+            showError("An error occurred. Please try again later.");
+            console.error("Verification error:", error);
+        });
+}
+
+// Handle resend code
+function handleResendCode() {
+    if (isInCooldown) {
+        return;
+    }
+    
+    if (!pendingEmail) {
+        showError("Email address not found. Please try registering again.");
+        return;
+    }
+    
+    // Disable resend button and start cooldown
+    startCooldown();
+    
+    // Create resend URL with parameters
+    const resendUrl = `${RESEND_API_URL}?email=${encodeURIComponent(pendingEmail)}&action=resendverifymail`;
+    
+    // Send GET request
+    fetch(resendUrl)
+        .then(response => response.text())
+        .then(data => {
+            try {
+                const responseData = JSON.parse(data);
+                
+                if (responseData.status === "success") {
+                    showSuccess("Verification code has been resent to your email.");
+                } else {
+                    showError(`Error: ${responseData.message || "Failed to resend code"}`);
+                }
+            } catch (error) {
+                showError("Failed to process the response. Please try again.");
+                console.error("Parse error:", error);
+            }
+        })
+        .catch(error => {
+            showError("An error occurred. Please try again later.");
+            console.error("Resend error:", error);
+        });
+}
+
+// Start cooldown timer for resend button
+function startCooldown() {
+    isInCooldown = true;
+    resendButton.disabled = true;
+    
+    // Show remaining time on button
+    resendButton.textContent = `Resend Code (${cooldownTime}s)`;
+    
+    // Clear any existing timer
+    if (cooldownTimer) {
+        clearInterval(cooldownTimer);
+    }
+    
+    // Start countdown
+    let remainingTime = cooldownTime;
+    cooldownTimer = setInterval(() => {
+        remainingTime--;
+        
+        if (remainingTime <= 0) {
+            // End cooldown
+            clearInterval(cooldownTimer);
+            resendButton.textContent = "Resend Code";
+            resendButton.disabled = false;
+            isInCooldown = false;
+        } else {
+            // Update button text
+            resendButton.textContent = `Resend Code (${remainingTime}s)`;
+        }
+    }, 1000);
+}
+
+// Show error message
+function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.style.display = 'block';
+    successMessage.style.display = 'none';
+    
+    // Hide error after 5 seconds
+    setTimeout(() => {
+        errorMessage.style.display = 'none';
+    }, 5000);
+}
+
+// Show success message
+function showSuccess(message) {
+    successMessage.textContent = message;
+    successMessage.style.display = 'block';
+    errorMessage.style.display = 'none';
+    
+    // Hide success after 5 seconds
+    setTimeout(() => {
+        successMessage.style.display = 'none';
+    }, 5000);
+}
+
+// Show success modal
+function showSuccessModal() {
+    successModal.classList.add('show');
+}
+
+// Set loading state
+function setLoading(isLoading) {
+    if (isLoading) {
+        buttonText.style.display = 'none';
+        verifyLoader.style.display = 'block';
+        verifyButton.disabled = true;
+    } else {
+        buttonText.style.display = 'block';
+        verifyLoader.style.display = 'none';
+        checkVerifyButtonState(); // Re-check form validity to determine button state
+    }
+}
+    </script>
