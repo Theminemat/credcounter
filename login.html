@@ -290,12 +290,7 @@
                     
                         if (data.status === 'error') {
                             if (data.message === 'Invalid token') {
-                                    localStorage.removeItem('creditCountUser');
-                                    localStorage.removeItem('authToken');
-                                    localStorage.removeItem('tokenExpiry');
-                                    localStorage.removeItem('userData');
-                                    localStorage.removeItem(CACHE_KEY);
-                                    localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+                                    
                             } else {
                                 //redirect to dashboard if calid token is given
                                 window.location.href = '/index.html';
