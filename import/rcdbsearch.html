@@ -399,8 +399,8 @@ function extractCoasterDetails(coaster) {
 
 function sendImportRequest(coaster, username) {
     const details = extractCoasterDetails(coaster);
-    const url = new URL('https://test.theminemat.de');
-    
+    const url = new URL('https://script.google.com/macros/s/AKfycbzTbp9S7NdBRnBw_ePkP9zqAlRBSi7UaYq-MG74ZPIVp4h0epObm9WYyDkxia3Q4yyZAQ/exec');
+    authToken = localStorage.getItem('authToken');
     // Add all parameters to the URL
     url.searchParams.append('username', username);
     url.searchParams.append('id', coaster.id);
@@ -418,6 +418,9 @@ function sendImportRequest(coaster, username) {
     url.searchParams.append('inversions', details.inversions);
     url.searchParams.append('duration', details.duration);
     url.searchParams.append('opened', details.opened);
+    url.searchParams.append('action', "addCoaster");
+    url.searchParams.append('token', authToken);
+    
     
     document.getElementById('loading-text').textContent = `Importing Coaster ${importIndex + 1} of ${selectedCoasters.length}...`;
     
