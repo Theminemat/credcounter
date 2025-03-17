@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Count - Import Roller Coasters</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .search-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .search-input-group {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px 0 0 5px;
+            font-size: 1rem;
+        }
+
+        .search-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 0 5px 5px 0;
+            padding: 0 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .search-button:hover {
+            background-color: #2980b9;
+        }
+
+        .results-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .coaster {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s;
+        }
+
+        .coaster:hover {
+            background-color: #f5f7fa;
+        }
+
+        .coaster-details {
+            flex-grow: 1;
+        }
+
+        .add-to-list {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .add-to-list:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+
+        .selected-list {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .selected-list h2 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .selected-items-container {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .selected-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f5f7fa;
+            margin-bottom: 8px;
+            border-radius: 5px;
+        }
+
+        .remove-item {
+            color: #e74c3c;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .import-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            display: block;
+            margin: 20px auto 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .import-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .import-button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+        }
+
+        .loading-container.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .back-button {
+            background-color: #7f8c8d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+
+        .back-button:hover {
+            background-color: #95a5a6;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .search-input-group {
+                flex-direction: column;
+            }
+
+            .search-input {
+                border-radius: 5px;
+                margin-bottom: 10px;
+            }
+
+            .search-button {
+                border-radius: 5px;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Import Roller Coasters</h1>
+        <p>Search and add roller coasters to your Credit Count</p>
+    </div>
+
+    <div class="search-container">
+        <div class="search-input-group">
+            <input type="text" id="search-input" class="search-input" placeholder="Search for roller coasters...">
+            <button id="search-button" class="search-button">Search</button>
+        </div>
+        <div id="results-container" class="results-container"></div>
+    </div>
+
+    <div class="selected-list">
+        <h2>Selected Coasters (<span id="selected-count">0</span>/10)</h2>
+        <div id="selected-items-container" class="selected-items-container"></div>
+        <button id="import-button" class="import-button" disabled>Import Coasters</button>
+    </div>
+
+    <div id="loading-container" class="loading-container">
+        <div class="loading-spinner"></div>
+        <div id="loading-text" class="loading-text">Importing coasters...</div>
+    </div>
+    <script>
+      let selectedCoasters = [];
+let isImporting = false;
+let importIndex = 0;
+
+// Get the currently logged in username from somewhere in your app
+function getCurrentUsername() {
+    // Replace this with how you actually get the username in your application
+    // For example, you might get it from localStorage or a global variable
+    return document.getElementById('current-username')?.value || 'user';
+}
+
+function searchCoasters() {
+    const query = document.getElementById("search-input").value;
+    const resultsContainer = document.getElementById("results-container");
+    resultsContainer.innerHTML = '';
+    
+    if (!query.trim()) {
+        resultsContainer.innerHTML = '<p class="no-results">Please enter a search term.</p>';
+        return;
+    }
+
+    // Show a loading indicator
+    resultsContainer.innerHTML = '<div class="loading-spinner"></div>';
+    
+    fetch(`https://rcdb-api.vercel.app/api/coasters/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            resultsContainer.innerHTML = '';
+            const coasters = data.coasters.slice(0, 5); // Limit to 5 results
+            
+            if (coasters.length === 0) {
+                resultsContainer.innerHTML = '<p class="no-results">No coasters found.</p>';
+                return;
+            }
+
+            coasters.forEach(coaster => {
+                const coasterDiv = document.createElement('div');
+                coasterDiv.classList.add('coaster');
+                coasterDiv.innerHTML = `
+                    <div class="coaster-details">
+                        <strong>Name:</strong> ${coaster.name || 'Unknown'} <br>
+                        <strong>Park:</strong> ${coaster.park?.name || 'Unknown'} <br>
+                        <strong>Manufacturer:</strong> ${coaster.make || 'Unknown'}
+                    </div>
+                    <button class="add-to-list">+ Add to List</button>
+                `;
+                
+                coasterDiv.querySelector('.add-to-list').addEventListener('click', () => addToSelectedList(coaster));
+                resultsContainer.appendChild(coasterDiv);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            resultsContainer.innerHTML = '<p class="no-results">Error fetching data. Please try again.</p>';
+        });
+}
+
+function addToSelectedList(coaster) {
+    if (selectedCoasters.length >= 10) {
+        alert('You can only add up to 10 coasters to the list.');
+        return;
+    }
+    
+    if (!selectedCoasters.some(item => item.id === coaster.id)) {
+        selectedCoasters.push(coaster);
+        renderSelectedCoasters();
+    }
+}
+
+function renderSelectedCoasters() {
+    const selectedItemsContainer = document.getElementById('selected-items-container');
+    const selectedCountElement = document.getElementById('selected-count');
+    
+    selectedItemsContainer.innerHTML = '';
+    selectedCountElement.textContent = selectedCoasters.length;
+    
+    selectedCoasters.forEach(coaster => {
+        const selectedItemDiv = document.createElement('div');
+        selectedItemDiv.classList.add('selected-item');
+        selectedItemDiv.innerHTML = `
+            ${coaster.name || 'Unknown'} - ${coaster.park?.name || 'Unknown'} - ${coaster.make || 'Unknown'}
+            <span class="remove-item">X</span>
+        `;
+        
+        selectedItemDiv.querySelector('.remove-item').addEventListener('click', () => removeFromSelectedList(coaster.id));
+        selectedItemsContainer.appendChild(selectedItemDiv);
+    });
+    
+    document.getElementById('import-button').disabled = selectedCoasters.length === 0;
+}
+
+function removeFromSelectedList(coasterId) {
+    selectedCoasters = selectedCoasters.filter(coaster => coaster.id !== coasterId);
+    renderSelectedCoasters();
+}
+
+function extractCoasterDetails(coaster) {
+    return {
+        name: coaster.name || '',
+        park: coaster.park?.name || '',
+        manufacturer: coaster.make || '',
+        model: coaster.model || '',
+        imgUrl: coaster.imgUrl || coaster.thumb || '',
+        country: coaster.park?.country || '',
+        type: coaster.type || '',
+        design: coaster.design || '',
+        length: coaster.length?.length || '',
+        height: coaster.height?.height || '',
+        speed: coaster.speed?.speed || '',
+        inversions: coaster.inversions || 0,
+        duration: coaster.duration || '',
+        opened: coaster.opened || ''
+    };
+}
+
+function sendImportRequest(coaster, username) {
+    const details = extractCoasterDetails(coaster);
+    const url = new URL('https://test.theminemat.de');
+    
+    // Add all parameters to the URL
+    url.searchParams.append('username', username);
+    url.searchParams.append('id', coaster.id);
+    url.searchParams.append('name', details.name);
+    url.searchParams.append('park', details.park);
+    url.searchParams.append('manufacturer', details.manufacturer);
+    url.searchParams.append('model', details.model);
+    url.searchParams.append('imgUrl', details.imgUrl);
+    url.searchParams.append('country', details.country);
+    url.searchParams.append('type', details.type);
+    url.searchParams.append('design', details.design);
+    url.searchParams.append('length', details.length);
+    url.searchParams.append('height', details.height);
+    url.searchParams.append('speed', details.speed);
+    url.searchParams.append('inversions', details.inversions);
+    url.searchParams.append('duration', details.duration);
+    url.searchParams.append('opened', details.opened);
+    
+    document.getElementById('loading-text').textContent = `Importing Coaster ${importIndex + 1} of ${selectedCoasters.length}...`;
+    
+    return fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Server response not OK');
+            }
+            return response.text();
+        })
+        .then(data => {
+            document.getElementById('loading-text').textContent = `Coaster ${importIndex + 1} imported successfully!`;
+        })
+        .catch(error => {
+            console.error('Import error:', error);
+            document.getElementById('loading-text').textContent = `Error importing ${details.name}: ${error.message}`;
+        });
+}
+
+function processNextImport() {
+    if (importIndex < selectedCoasters.length) {
+        const coaster = selectedCoasters[importIndex];
+        const username = getCurrentUsername();
+        
+        sendImportRequest(coaster, username)
+            .finally(() => {
+                importIndex++;
+                setTimeout(() => {
+                    processNextImport();
+                }, 1000); // 1 second delay between imports
+            });
+    } else {
+        document.getElementById('loading-text').textContent = 'All coasters imported!';
+        setTimeout(() => {
+            window.location.href = '/index';
+        }, 2000);
+    }
+}
+
+function startImport() {
+    if (selectedCoasters.length === 0) {
+        alert('Please select at least one coaster to import.');
+        return;
+    }
+    
+    // Show loading overlay
+    document.getElementById('loading-container').classList.add('show');
+    
+    // Reset import index
+    importIndex = 0;
+    isImporting = true;
+    
+    // Start the import process
+    processNextImport();
+}
+
+// Initialize event listeners when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize search button
+    const searchButton = document.getElementById('search-button');
+    if (searchButton) {
+        searchButton.addEventListener('click', searchCoasters);
+    }
+    
+    // Initialize import button
+    const importButton = document.getElementById('import-button');
+    if (importButton) {
+        importButton.addEventListener('click', startImport);
+    }
+    
+    // Initialize search input to allow pressing Enter
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchCoasters();
+            }
+        });
+    }
+});
+    </script>
