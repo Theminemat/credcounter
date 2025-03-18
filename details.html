@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Credit Count - Coaster Details</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
         /* Additional styles for details page */
@@ -123,21 +124,49 @@
             transform: scale(1.1);
         }
 
-        .edit-button {
-            background-color: #2ecc71;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 8px 15px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            margin-left: 10px;
-        }
-        
-        .edit-button:hover {
-            background-color: #27ae60;
-        }
+.icon-button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.3s;
+    }
+    
+    .icon-button:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .icon-button i {
+        font-size: 18px;
+    }
+    
+    .icon-button.delete i {
+        color: #fff;
+    }
+    
+    .icon-button.delete {
+        background-color: #ff5252;
+    }
+    
+    .icon-button.delete:hover {
+        background-color: #ff1744;
+    }
+    
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+    }
 
         .back-button {
             display: inline-flex;
@@ -219,7 +248,19 @@
     <div id="toast" class="toast"></div>
 
     <div id="coaster-details-container" class="coaster-details-container" style="display: none;">
+        <!-- Bearbeite deinen bestehenden Edit-Button so: -->
+<button id="edit-coaster-button" class="icon-button">
+    <i class="fas fa-pencil-alt" aria-hidden="true"></i>
+    <span class="sr-only">Bearbeiten</span>
+</button>
+
+<!-- Füge diesen neuen Lösch-Button hinzu wo du ihn haben möchtest -->
+<button id="delete-coaster-button" class="icon-button delete">
+    <i class="fas fa-trash-alt" aria-hidden="true"></i>
+    <span class="sr-only">Löschen</span>
+</button>
         <div class="coaster-header" id="coaster-header">
+            
             <!-- Image will be inserted here -->
         </div>
 
@@ -228,7 +269,6 @@
             <div class="buttons-container">
                 <button id="decrement-ride-button" class="increment-large">-</button>
                 <button id="increment-ride-button" class="increment-large">+</button>
-                <button id="edit-coaster-button" class="edit-button">Edit Coaster</button>
             </div>
         </div>
 
