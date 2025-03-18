@@ -290,7 +290,7 @@ let importIndex = 0;
 function getCurrentUsername() {
     // Replace this with how you actually get the username in your application
     // For example, you might get it from localStorage or a global variable
-    return document.getElementById('current-username')?.value || 'user';
+    return localStorage.getItem('creditCountUser');
 }
 
 function searchCoasters() {
