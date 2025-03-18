@@ -323,11 +323,15 @@ function setupEventListeners() {
         decrementRide(coasterData.Name);
     });
     // Set up edit button
+// In edit button event listener from first script
     const editButton = document.getElementById('edit-coaster-button');
     if (editButton) {
         editButton.addEventListener('click', () => {
-            // Save coaster data to localStorage
-            localStorage.setItem('tempedit', JSON.stringify(coasterData));
+            // Save coaster data to localStorage with the expected format
+            localStorage.setItem('tempedit', JSON.stringify({
+                status: "success",
+                coaster: coasterData
+            }));
             // Redirect to edit page
             window.location.href = '/editcoaster';
         });
