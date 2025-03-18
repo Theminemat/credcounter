@@ -399,7 +399,7 @@ function extractCoasterDetails(coaster) {
 
 function sendImportRequest(coaster, username) {
     const details = extractCoasterDetails(coaster);
-    const url = new URL('https://script.google.com/macros/s/AKfycbzTbp9S7NdBRnBw_ePkP9zqAlRBSi7UaYq-MG74ZPIVp4h0epObm9WYyDkxia3Q4yyZAQ/exec');
+    const url = new URL('https://script.google.com/macros/s/AKfycbwnR_172Nxi_yEQx697Omo1izJOEWAoFZ4a0GuvmI_V8kXk-oF9P7RufkHpIkTxspdUFQ/exec');
     authToken = localStorage.getItem('authToken');
     // Add all parameters to the URL
     url.searchParams.append('username', username);
@@ -424,21 +424,20 @@ function sendImportRequest(coaster, username) {
     
     document.getElementById('loading-text').textContent = `Importing Coaster ${importIndex + 1} of ${selectedCoasters.length}...`;
     
-    return fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Server response not OK');
-            }
-            return response.text();
-        })
-        .then(data => {
+ return fetch(url)
+    .then(response => response.json())  // Parse the response as JSON
+    .then(data => {
+        if (data.status === 'success') {
             document.getElementById('loading-text').textContent = `Coaster ${importIndex + 1} imported successfully!`;
-        })
-        .catch(error => {
-            console.error('Import error:', error);
-            document.getElementById('loading-text').textContent = `Error importing ${details.name}: ${error.message}`;
-        });
-}
+        } else {
+            throw new Error(data.message || 'Unknown error occurred');
+        }
+    })
+    .catch(error => {
+        console.error('Import error:', error);
+        document.getElementById('loading-text').textContent = `Error importing ${details.name}: ${error.message}`;
+    });
+
 
 function processNextImport() {
     if (importIndex < selectedCoasters.length) {
