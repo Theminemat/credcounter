@@ -348,6 +348,14 @@ function updateUserProfile(username) {
 
 // Set up event listeners
 function setupEventListeners() {
+
+        // Set up delete button
+    const deleteButton = document.getElementById('delete-coaster-button');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', () => {
+            deleteCoaster(coasterData.Name);
+        });
+    }
     // Set up logout button
     const logoutButton = document.getElementById('logout-button');
     if (logoutButton) {
@@ -600,6 +608,64 @@ function incrementRide(coasterName) {
             // Restore button
             incrementRideButton.textContent = originalText;
             incrementRideButton.disabled = false;
+            
+            // Show error toast
+            showToast(`Error: ${error.message}`);
+        });
+}
+
+// Function to handle coaster deletion
+function deleteCoaster(coasterName) {
+    // Show confirmation dialog
+    if (!confirm(`Are you sure you want to delete "${coasterName}"? This action cannot be undone.`)) {
+        return; // User cancelled
+    }
+    
+    // Show loading spinner on delete button
+    const deleteButton = document.getElementById('delete-coaster-button');
+    const originalHTML = deleteButton.innerHTML;
+    deleteButton.innerHTML = '<div class="spinner"></div>';
+    deleteButton.disabled = true;
+    
+    // Build deletion URL
+    const url = new URL('https://script.google.com/macros/s/AKfycbxw4IVdBOQHStdJ6FEdtQ7F9WUty-z1Zb1z98ZM2qlZE0YdroBD6USqJJ39sF9WsMhkcg/exec');
+    url.searchParams.append('username', username);
+    url.searchParams.append('token', authToken);
+    url.searchParams.append('coaster', coasterName);
+    url.searchParams.append('action', 'deleteCoaster');
+    
+    // Send delete request
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Restore button
+            deleteButton.innerHTML = originalHTML;
+            deleteButton.disabled = false;
+            
+            if (data.status === 'success') {
+                // Show success toast and redirect to main page
+                showToast(`Successfully deleted ${coasterName}`);
+                
+                // Redirect to index page after short delay
+                setTimeout(() => {
+                    window.location.href = '/index.html';
+                }, 1500);
+            } else {
+                // Show error
+                showToast(`Failed to delete coaster: ${data.message || 'Unknown error'}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting coaster:', error);
+            
+            // Restore button
+            deleteButton.innerHTML = originalHTML;
+            deleteButton.disabled = false;
             
             // Show error toast
             showToast(`Error: ${error.message}`);
