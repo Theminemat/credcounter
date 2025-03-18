@@ -281,8 +281,8 @@
         <div class="loading-spinner"></div>
         <div id="loading-text" class="loading-text">Importing coasters...</div>
     </div>
-    <script>
-      let selectedCoasters = [];
+   <script>
+let selectedCoasters = [];
 let isImporting = false;
 let importIndex = 0;
 
@@ -297,7 +297,7 @@ function searchCoasters() {
     const query = document.getElementById("search-input").value;
     const resultsContainer = document.getElementById("results-container");
     resultsContainer.innerHTML = '';
-    
+
     if (!query.trim()) {
         resultsContainer.innerHTML = '<p class="no-results">Please enter a search term.</p>';
         return;
@@ -305,13 +305,13 @@ function searchCoasters() {
 
     // Show a loading indicator
     resultsContainer.innerHTML = '<div class="loading-spinner"></div>';
-    
+
     fetch(`https://rcdb-api.vercel.app/api/coasters/search?q=${encodeURIComponent(query)}`)
         .then(response => response.json())
         .then(data => {
             resultsContainer.innerHTML = '';
             const coasters = data.coasters.slice(0, 5); // Limit to 5 results
-            
+
             if (coasters.length === 0) {
                 resultsContainer.innerHTML = '<p class="no-results">No coasters found.</p>';
                 return;
@@ -328,7 +328,7 @@ function searchCoasters() {
                     </div>
                     <button class="add-to-list">+ Add to List</button>
                 `;
-                
+
                 coasterDiv.querySelector('.add-to-list').addEventListener('click', () => addToSelectedList(coaster));
                 resultsContainer.appendChild(coasterDiv);
             });
@@ -344,7 +344,7 @@ function addToSelectedList(coaster) {
         alert('You can only add up to 10 coasters to the list.');
         return;
     }
-    
+
     if (!selectedCoasters.some(item => item.id === coaster.id)) {
         selectedCoasters.push(coaster);
         renderSelectedCoasters();
@@ -354,10 +354,10 @@ function addToSelectedList(coaster) {
 function renderSelectedCoasters() {
     const selectedItemsContainer = document.getElementById('selected-items-container');
     const selectedCountElement = document.getElementById('selected-count');
-    
+
     selectedItemsContainer.innerHTML = '';
     selectedCountElement.textContent = selectedCoasters.length;
-    
+
     selectedCoasters.forEach(coaster => {
         const selectedItemDiv = document.createElement('div');
         selectedItemDiv.classList.add('selected-item');
@@ -365,11 +365,11 @@ function renderSelectedCoasters() {
             ${coaster.name || 'Unknown'} - ${coaster.park?.name || 'Unknown'} - ${coaster.make || 'Unknown'}
             <span class="remove-item">X</span>
         `;
-        
+
         selectedItemDiv.querySelector('.remove-item').addEventListener('click', () => removeFromSelectedList(coaster.id));
         selectedItemsContainer.appendChild(selectedItemDiv);
     });
-    
+
     document.getElementById('import-button').disabled = selectedCoasters.length === 0;
 }
 
@@ -384,23 +384,23 @@ function extractCoasterDetails(coaster) {
         park: coaster.park?.name || '',
         manufacturer: coaster.make || '',
         model: coaster.model || '',
-        imgUrl: coaster.imgUrl || coaster.thumb || '',
-        country: coaster.park?.country || '',
+        imgUrl: coaster.mainPicture?.url || coaster.thumb || '',
+        country: coaster.country || '',
         type: coaster.type || '',
         design: coaster.design || '',
-        length: coaster.length?.length || '',
-        height: coaster.height?.height || '',
-        speed: coaster.speed?.speed || '',
-        inversions: coaster.inversions || 0,
-        duration: coaster.duration || '',
-        opened: coaster.opened || ''
+        length: coaster.stats?.length || '',
+        height: coaster.stats?.height || '',
+        speed: coaster.stats?.speed || '',
+        inversions: coaster.stats?.inversions || 0,
+        duration: coaster.stats?.duration || '',
+        opened: coaster.status?.date?.opened || ''
     };
 }
 
 function sendImportRequest(coaster, username) {
     const details = extractCoasterDetails(coaster);
     const url = new URL('https://script.google.com/macros/s/AKfycbwbuR9VdkqHDHahldNGEdvF4D_aAkyYibmkGm5lOxnxvRQvfp475A0R_dbeyvBGfMyWhA/exec');
-    authToken = localStorage.getItem('authToken');
+    const authToken = localStorage.getItem('authToken');
     // Add all parameters to the URL
     url.searchParams.append('username', username);
     url.searchParams.append('id', coaster.id);
@@ -420,30 +420,29 @@ function sendImportRequest(coaster, username) {
     url.searchParams.append('opened', details.opened);
     url.searchParams.append('action', "addCoaster");
     url.searchParams.append('token', authToken);
-    
-    
+
     document.getElementById('loading-text').textContent = `Importing Coaster ${importIndex + 1} of ${selectedCoasters.length}...`;
-    
- return fetch(url)
-    .then(response => response.json())  // Parse the response as JSON
-    .then(data => {
-        if (data.status === 'success') {
-            document.getElementById('loading-text').textContent = `Coaster ${importIndex + 1} imported successfully!`;
-        } else {
-            throw new Error(data.message || 'Unknown error occurred');
-        }
-    })
-    .catch(error => {
-        console.error('Import error:', error);
-        document.getElementById('loading-text').textContent = `Error importing ${details.name}: ${error.message}`;
-    });
+
+    return fetch(url)
+        .then(response => response.json())  // Parse the response as JSON
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('loading-text').textContent = `Coaster ${importIndex + 1} imported successfully!`;
+            } else {
+                throw new Error(data.message || 'Unknown error occurred');
+            }
+        })
+        .catch(error => {
+            console.error('Import error:', error);
+            document.getElementById('loading-text').textContent = `Error importing ${details.name}: ${error.message}`;
+        });
 }
 
 function processNextImport() {
     if (importIndex < selectedCoasters.length) {
         const coaster = selectedCoasters[importIndex];
         const username = getCurrentUsername();
-        
+
         sendImportRequest(coaster, username)
             .finally(() => {
                 importIndex++;
@@ -464,14 +463,14 @@ function startImport() {
         alert('Please select at least one coaster to import.');
         return;
     }
-    
+
     // Show loading overlay
     document.getElementById('loading-container').classList.add('show');
-    
+
     // Reset import index
     importIndex = 0;
     isImporting = true;
-    
+
     // Start the import process
     processNextImport();
 }
@@ -483,13 +482,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (searchButton) {
         searchButton.addEventListener('click', searchCoasters);
     }
-    
+
     // Initialize import button
     const importButton = document.getElementById('import-button');
     if (importButton) {
         importButton.addEventListener('click', startImport);
     }
-    
+
     // Initialize search input to allow pressing Enter
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
@@ -500,4 +499,4 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-    </script>
+</script>
