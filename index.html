@@ -457,7 +457,7 @@ function hasDataChanged(oldData, newData) {
         // Check if any key property has changed
         if (newCoaster.Ride !== oldCoaster.Ride ||
             newCoaster.Park !== oldCoaster.Park ||
-            newCoaster.Manufacteuer !== oldCoaster.Manufacteuer ||
+            newCoaster.Manufacturer !== oldCoaster.Manufacturer ||
             newCoaster.Model !== oldCoaster.Model ||
             newCoaster.ImgUrl !== oldCoaster.ImgUrl) {
             return true;
@@ -475,7 +475,7 @@ function updateFilterOptions() {
     
     // Get unique parks and manufacturers
     const parks = [...new Set(allCoasters.map(c => c.Park).filter(Boolean))].sort();
-    const manufacturers = [...new Set(allCoasters.map(c => c.Manufacteuer).filter(Boolean))].sort();
+    const manufacturers = [...new Set(allCoasters.map(c => c.Manufacturer).filter(Boolean))].sort();
     
     // Add options to filters
     parks.forEach(park => {
@@ -509,7 +509,7 @@ function updateStats(coasters) {
     // Find top manufacturer
     const manufacturerCounts = {};
     coasters.forEach(coaster => {
-        const manufacturer = coaster.Manufacteuer;
+        const manufacturer = coaster.Manufacturer;
         if (manufacturer) {
             manufacturerCounts[manufacturer] = (manufacturerCounts[manufacturer] || 0) + 1;
         }
@@ -609,7 +609,7 @@ function displayCoasters(coasters) {
         infoDiv.className = 'coaster-info';
 
         const manufacturerSpan = document.createElement('span');
-        manufacturerSpan.textContent = coaster.Manufacteuer || 'Unknown';
+        manufacturerSpan.textContent = coaster.Manufacturer || 'Unknown';
 
         const modelSpan = document.createElement('span');
         modelSpan.textContent = coaster.Model || '';
@@ -743,7 +743,7 @@ function filterCoasters() {
         const matchesPark = !selectedPark || coaster.Park === selectedPark;
         
         // Check if the coaster matches the selected manufacturer
-        const manufacturer = coaster.Manufacteuer || '';
+        const manufacturer = coaster.Manufacturer || '';
         const matchesManufacturer = !selectedManufacturer || manufacturer === selectedManufacturer;
         
         return matchesSearch && matchesPark && matchesManufacturer;
