@@ -464,7 +464,7 @@
                         <input type="number" id="inversions" name="inversions" class="form-control" min="0">
                     </div>
                     <div class="form-group">
-                        <label for="duration">Duration (seconds)</label>
+                        <label for="duration">Duration (mm:ss)</label>
                         <input type="text" id="duration" name="duration" class="form-control">
                     </div>
                     <div class="form-group">
@@ -812,11 +812,9 @@
                 form.reset();
                 document.getElementById('preview-container').style.backgroundImage = '';
                 document.getElementById('preview-container').classList.remove('has-image');
-                
-                // Redirect to dashboard after delay
-                setTimeout(() => {
-                    window.location.href = '/index';
-                }, 2000);
+                window.location.href = '/index';
+            
+            
                 
             } catch (error) {
                 console.error('Error adding coaster:', error);
