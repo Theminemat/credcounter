@@ -437,7 +437,7 @@ function sendImportRequest(coaster, username) {
         console.error('Import error:', error);
         document.getElementById('loading-text').textContent = `Error importing ${details.name}: ${error.message}`;
     });
-
+}
 
 function processNextImport() {
     if (importIndex < selectedCoasters.length) {
