@@ -882,7 +882,7 @@ async function deleteCoaster() {
     loadingOverlay.classList.add('show');
     
     try {
-        const url = new URL('https://script.google.com/macros/s/AKfycbwbuR9VdkqHDHahldNGEdvF4D_aAkyYibmkGm5lOxnxvRQvfp475A0R_dbeyvBGfMyWhA/exec');
+        const url = new URL('https://script.google.com/macros/s/AKfycbzOgsXQNM1Cz1kBIvMyOs3UjMT9hxvv6WW5LyEvshD6VIXCZhRs2uJlORJQiAkoLWmwzQ/exec');
         
         url.searchParams.append('username', user.username);
         url.searchParams.append('token', user.token);
@@ -916,7 +916,7 @@ async function createCoaster(formData) {
     loadingOverlay.classList.add('show');
     
     try {
-        const url = new URL('https://script.google.com/macros/s/AKfycbwbuR9VdkqHDHahldNGEdvF4D_aAkyYibmkGm5lOxnxvRQvfp475A0R_dbeyvBGfMyWhA/exec');
+        const url = new URL('https://script.google.com/macros/s/AKfycbzOgsXQNM1Cz1kBIvMyOs3UjMT9hxvv6WW5LyEvshD6VIXCZhRs2uJlORJQiAkoLWmwzQ/exec');
         
         // Add all parameters to the URL
         Object.keys(formData).forEach(key => {
