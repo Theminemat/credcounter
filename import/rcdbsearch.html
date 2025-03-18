@@ -399,7 +399,7 @@ function extractCoasterDetails(coaster) {
 
 function sendImportRequest(coaster, username) {
     const details = extractCoasterDetails(coaster);
-    const url = new URL('https://script.google.com/macros/s/AKfycbwnR_172Nxi_yEQx697Omo1izJOEWAoFZ4a0GuvmI_V8kXk-oF9P7RufkHpIkTxspdUFQ/exec');
+    const url = new URL('https://script.google.com/macros/s/AKfycbyGPmvekyTqGzP9qTh4t7gFTIstjIAx9r0uaVdMh93GCQbd5NSLKlvfn4QePyzJCH4pXQ/exec');
     authToken = localStorage.getItem('authToken');
     // Add all parameters to the URL
     url.searchParams.append('username', username);
