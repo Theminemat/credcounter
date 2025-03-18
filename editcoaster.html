@@ -586,5 +586,490 @@
     </div>
 
     <script>
-      
+      // Cache for coaster data
+let coasterData = [];
+const CACHE_KEY = "coasterData";
+const EDIT_KEY = "tempedit";
+let originalCoasterData = null;
+
+// Unique sets for parks and manufacturers
+let parks = new Set();
+let manufacturers = new Set();
+
+// Function to get username and auth token
+function getCurrentUser() {
+    return {
+        username: localStorage.getItem('creditCountUser') || '',
+        token: localStorage.getItem('authToken') || ''
+    };
+}
+
+// Load cached coaster data and populate dropdowns
+function loadCachedData() {
+    const cachedData = localStorage.getItem(CACHE_KEY);
+    if (cachedData) {
+        try {
+            coasterData = JSON.parse(cachedData);
+            
+            // Extract unique parks and manufacturers
+            coasterData.forEach(coaster => {
+                if (coaster.Park) parks.add(coaster.Park);
+                if (coaster.Manufacturer) manufacturers.add(coaster.Manufacturer);
+            });
+            
+            console.log(`Loaded ${coasterData.length} coasters from cache`);
+            console.log(`Found ${parks.size} unique parks and ${manufacturers.size} unique manufacturers`);
+        } catch (e) {
+            console.error('Error parsing cached coaster data:', e);
+        }
+    }
+}
+
+// Load coaster data from tempedit localStorage
+function loadCoasterData() {
+    const tempEditData = localStorage.getItem(EDIT_KEY);
+    if (tempEditData) {
+        try {
+            const data = JSON.parse(tempEditData);
+            if (data.status === "success" && data.coaster) {
+                originalCoasterData = data.coaster;
+                populateForm(data.coaster);
+                console.log('Loaded coaster data for editing:', data.coaster);
+                return true;
+            }
+        } catch (e) {
+            console.error('Error parsing coaster data:', e);
+            showToast('Error loading coaster data', 'error');
+        }
+    }
+    
+    showToast('No coaster data found for editing', 'error');
+    setTimeout(() => {
+        window.location.href = '/index';
+    }, 1500);
+    return false;
+}
+
+// Populate form with coaster data
+function populateForm(coaster) {
+    document.getElementById('name').value = coaster.Name || '';
+    document.getElementById('park').value = coaster.Park || '';
+    document.getElementById('manufacturer').value = coaster.Manufacturer || '';
+    document.getElementById('model').value = coaster.Model || '';
+    document.getElementById('type').value = coaster.Type || '';
+    document.getElementById('design').value = coaster.Design || '';
+    document.getElementById('country').value = coaster.Country || '';
+    document.getElementById('opened').value = coaster.Opened || '';
+    document.getElementById('height').value = coaster.Height || '';
+    document.getElementById('length').value = coaster.Length || '';
+    document.getElementById('speed').value = coaster.Speed || '';
+    document.getElementById('inversions').value = coaster.Inversions || '';
+    document.getElementById('duration').value = coaster.Duration || '';
+    document.getElementById('rides').value = coaster.Ride || 1;
+    document.getElementById('imgUrl').value = coaster.ImgUrl || '';
+    
+    // If there's an image URL, update the preview if in upload mode
+    if (coaster.ImgUrl) {
+        const previewContainer = document.getElementById('preview-container');
+        previewContainer.style.backgroundImage = `url(${coaster.ImgUrl})`;
+        previewContainer.classList.add('has-image');
+    }
+}
+
+// Show toast notification
+function showToast(message, type = '') {
+    const toast = document.getElementById('toast');
+    toast.className = 'toast';
+    if (type) toast.classList.add(type);
+    
+    toast.textContent = message;
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// Setup autocomplete dropdown
+function setupAutocomplete(inputId, dropdownId, dataSet) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+    
+    input.addEventListener('input', function() {
+        const value = this.value.toLowerCase();
+        dropdown.innerHTML = '';
+        
+        if (value.length < 2) {
+            dropdown.classList.remove('show');
+            return;
+        }
+        
+        // Filter matching items
+        const matches = [...dataSet].filter(item => 
+            item.toLowerCase().includes(value)
+        ).slice(0, 5); // Limit to 5 results
+        
+        if (matches.length > 0) {
+            matches.forEach(match => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.textContent = match;
+                item.addEventListener('click', function() {
+                    input.value = match;
+                    dropdown.classList.remove('show');
+                });
+                dropdown.appendChild(item);
+            });
+            dropdown.classList.add('show');
+        } else {
+            dropdown.classList.remove('show');
+        }
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (e.target !== input && e.target !== dropdown) {
+            dropdown.classList.remove('show');
+        }
+    });
+    
+    // Show dropdown on focus if input has value
+    input.addEventListener('focus', function() {
+        const value = this.value.toLowerCase();
+        if (value.length >= 2) {
+            const matches = [...dataSet].filter(item => 
+                item.toLowerCase().includes(value)
+            ).slice(0, 5);
+            
+            dropdown.innerHTML = '';
+            
+            if (matches.length > 0) {
+                matches.forEach(match => {
+                    const item = document.createElement('div');
+                    item.className = 'dropdown-item';
+                    item.textContent = match;
+                    item.addEventListener('click', function() {
+                        input.value = match;
+                        dropdown.classList.remove('show');
+                    });
+                    dropdown.appendChild(item);
+                });
+                dropdown.classList.add('show');
+            }
+        }
+    });
+}
+
+// Toggle image input type
+function setupImageInputToggle() {
+    const urlOption = document.getElementById('url-option');
+    const uploadOption = document.getElementById('upload-option');
+    const urlContainer = document.getElementById('url-input-container');
+    const uploadContainer = document.getElementById('upload-container');
+    
+    urlOption.addEventListener('change', function() {
+        if (this.checked) {
+            urlContainer.style.display = 'block';
+            uploadContainer.style.display = 'none';
+        }
+    });
+    
+    uploadOption.addEventListener('change', function() {
+        if (this.checked) {
+            urlContainer.style.display = 'none';
+            uploadContainer.style.display = 'block';
+        }
+    });
+}
+
+// Handle image upload preview
+function setupImageUploadPreview() {
+    const fileInput = document.getElementById('image-upload');
+    const previewContainer = document.getElementById('preview-container');
+    
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewContainer.style.backgroundImage = `url(${e.target.result})`;
+                previewContainer.classList.add('has-image');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Handle drag and drop
+    previewContainer.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#3498db';
+    });
+    
+    previewContainer.addEventListener('dragleave', function() {
+        this.style.borderColor = '#ddd';
+    });
+    
+    previewContainer.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#ddd';
+        
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            fileInput.files = e.dataTransfer.files;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewContainer.style.backgroundImage = `url(${e.target.result})`;
+                previewContainer.classList.add('has-image');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+// Upload image to Imgur
+async function uploadImageToImgur(file) {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingText = document.getElementById('loading-text');
+    loadingText.textContent = 'Uploading image...';
+    loadingOverlay.classList.add('show');
+    
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    try {
+        const response = await fetch('https://api.imgur.com/3/image', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Client-ID 8ee8961ea99335a'
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('uploaded-img-url').value = data.data.link;
+            return data.data.link;
+        } else {
+            throw new Error(data.data.error || 'Failed to upload image');
+        }
+    } catch (error) {
+        console.error('Error uploading to Imgur:', error);
+        showToast('Failed to upload image: ' + error.message, 'error');
+        throw error;
+    } finally {
+        loadingOverlay.classList.remove('show');
+    }
+}
+
+// Show confirmation dialog
+function showConfirmationDialog() {
+    document.getElementById('confirmation-overlay').classList.add('show');
+}
+
+// Hide confirmation dialog
+function hideConfirmationDialog() {
+    document.getElementById('confirmation-overlay').classList.remove('show');
+}
+
+// Delete coaster via API
+async function deleteCoaster() {
+    const user = getCurrentUser();
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingText = document.getElementById('loading-text');
+    
+    loadingText.textContent = 'Deleting coaster...';
+    loadingOverlay.classList.add('show');
+    
+    try {
+        const url = new URL('https://script.google.com/macros/s/AKfycbwbuR9VdkqHDHahldNGEdvF4D_aAkyYibmkGm5lOxnxvRQvfp475A0R_dbeyvBGfMyWhA/exec');
+        
+        url.searchParams.append('username', user.username);
+        url.searchParams.append('token', user.token);
+        url.searchParams.append('name', originalCoasterData.Name);
+        url.searchParams.append('park', originalCoasterData.Park);
+        url.searchParams.append('action', 'deleteCoaster');
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.status !== 'success') {
+            throw new Error(data.message || 'Failed to delete coaster');
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error deleting coaster:', error);
+        showToast('Failed to delete coaster: ' + error.message, 'error');
+        return false;
+    } finally {
+        loadingOverlay.classList.remove('show');
+    }
+}
+
+// Create new coaster via API
+async function createCoaster(formData) {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingText = document.getElementById('loading-text');
+    
+    loadingText.textContent = 'Creating updated coaster...';
+    loadingOverlay.classList.add('show');
+    
+    try {
+        const url = new URL('https://script.google.com/macros/s/AKfycbwbuR9VdkqHDHahldNGEdvF4D_aAkyYibmkGm5lOxnxvRQvfp475A0R_dbeyvBGfMyWhA/exec');
+        
+        // Add all parameters to the URL
+        Object.keys(formData).forEach(key => {
+            url.searchParams.append(key, formData[key]);
+        });
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.status !== 'success') {
+            throw new Error(data.message || 'API error');
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('Error creating coaster:', error);
+        showToast('Failed to create coaster: ' + error.message, 'error');
+        throw error;
+    } finally {
+        loadingOverlay.classList.remove('show');
+    }
+}
+
+// Handle form submission
+async function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    const form = document.getElementById('coaster-form');
+    const submitButton = document.getElementById('submit-button');
+    
+    // Basic validation
+    const nameInput = document.getElementById('name');
+    const parkInput = document.getElementById('park');
+    
+    if (!nameInput.value.trim()) {
+        nameInput.classList.add('invalid');
+        showToast('Coaster name is required', 'error');
+        return;
+    }
+    
+    if (!parkInput.value.trim()) {
+        parkInput.classList.add('invalid');
+        showToast('Park name is required', 'error');
+        return;
+    }
+    
+    // Show confirmation dialog
+    showConfirmationDialog();
+}
+
+// Process update after confirmation
+async function processUpdate() {
+    const submitButton = document.getElementById('submit-button');
+    
+    // Start loading state
+    submitButton.disabled = true;
+    submitButton.classList.add('loading');
+    
+    try {
+        // First delete the original coaster
+        const deleteResult = await deleteCoaster();
+        
+        if (!deleteResult) {
+            throw new Error('Failed to delete original coaster');
+        }
+        
+        // Handle image upload if needed
+        let imageUrl = document.getElementById('imgUrl').value;
+        
+        if (document.getElementById('upload-option').checked) {
+            const fileInput = document.getElementById('image-upload');
+            if (fileInput.files.length > 0) {
+                imageUrl = await uploadImageToImgur(fileInput.files[0]);
+            }
+        }
+        
+        // Prepare data for API submission
+        const user = getCurrentUser();
+        const formData = {
+            username: user.username,
+            token: user.token,
+            name: document.getElementById('name').value,
+            park: document.getElementById('park').value,
+            manufacturer: document.getElementById('manufacturer').value,
+            model: document.getElementById('model').value,
+            imgUrl: imageUrl || '',
+            country: document.getElementById('country').value,
+            type: document.getElementById('type').value,
+            design: document.getElementById('design').value,
+            length: document.getElementById('length').value,
+            height: document.getElementById('height').value,
+            speed: document.getElementById('speed').value,
+            inversions: document.getElementById('inversions').value,
+            duration: document.getElementById('duration').value,
+            opened: document.getElementById('opened').value,
+            ride: document.getElementById('rides').value,
+            action: "addCoaster"
+        };
+        
+        // Submit to API
+        await createCoaster(formData);
+        
+        // Show success message
+        showToast('Coaster updated successfully!', 'success');
+        
+        // Clear tempEdit data
+        localStorage.removeItem(EDIT_KEY);
+        
+        // Redirect to dashboard
+        setTimeout(() => {
+            window.location.href = '/index';
+        }, 1500);
+        
+    } catch (error) {
+        console.error('Error updating coaster:', error);
+        showToast('Failed to update coaster: ' + error.message, 'error');
+    } finally {
+        // End loading state
+        submitButton.disabled = false;
+        submitButton.classList.remove('loading');
+        hideConfirmationDialog();
+    }
+}
+
+// Initialize form on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Load cached coaster data
+    loadCachedData();
+    
+    // Load coaster data to edit
+    loadCoasterData();
+    
+    // Setup autocomplete for park and manufacturer
+    setupAutocomplete('park', 'park-dropdown', parks);
+    setupAutocomplete('manufacturer', 'manufacturer-dropdown', manufacturers);
+    
+    // Setup image upload functionality
+    setupImageInputToggle();
+    setupImageUploadPreview();
+    
+    // Handle form submission
+    document.getElementById('coaster-form').addEventListener('submit', handleFormSubmit);
+    
+    // Remove invalid class on input
+    const inputs = document.querySelectorAll('.form-control');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            this.classList.remove('invalid');
+        });
+    });
+    
+    // Add event listeners to confirmation buttons
+    document.getElementById('cancel-button').addEventListener('click', hideConfirmationDialog);
+    document.getElementById('confirm-button').addEventListener('click', processUpdate);
+});
 </script>
