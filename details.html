@@ -123,6 +123,22 @@
             transform: scale(1.1);
         }
 
+        .edit-button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-left: 10px;
+        }
+        
+        .edit-button:hover {
+            background-color: #27ae60;
+        }
+
         .back-button {
             display: inline-flex;
             align-items: center;
@@ -212,6 +228,7 @@
             <div class="buttons-container">
                 <button id="decrement-ride-button" class="increment-large">-</button>
                 <button id="increment-ride-button" class="increment-large">+</button>
+                <button id="edit-coaster-button" class="edit-button">Edit Coaster</button>
             </div>
         </div>
 
@@ -305,6 +322,17 @@ function setupEventListeners() {
     decrementRideButton.addEventListener('click', () => {
         decrementRide(coasterData.Name);
     });
+    // Set up edit button
+    const editButton = document.getElementById('edit-coaster-button');
+    if (editButton) {
+        editButton.addEventListener('click', () => {
+            // Save coaster data to localStorage
+            localStorage.setItem('tempedit', JSON.stringify(coasterData));
+            // Redirect to edit page
+            window.location.href = '/editcoaster';
+        });
+    }
+    
 }
 
 // Logout function
