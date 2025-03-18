@@ -577,7 +577,7 @@
     <div id="confirmation-overlay" class="confirmation-overlay">
         <div class="confirmation-dialog">
             <h3>Confirm Update</h3>
-            <p>This will update the coaster by deleting the original entry and creating a new one. Do you want to continue?</p>
+            <p>This change can't be undone?</p>
             <div class="confirmation-buttons">
                 <button id="cancel-button" class="submit-button cancel-button">Cancel</button>
                 <button id="confirm-button" class="submit-button confirm-button">Update</button>
@@ -973,6 +973,7 @@ async function processUpdate() {
     // Start loading state
     submitButton.disabled = true;
     submitButton.classList.add('loading');
+    hideConfirmationDialog()
     
     try {
         // First delete the original coaster
