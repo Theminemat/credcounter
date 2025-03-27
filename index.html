@@ -63,10 +63,8 @@
     <div id="error-message" class="error-message" style="display: none;"></div>
     <div id="coaster-grid" class="coaster-grid"></div>
     <script>
-  // Configuration
-const API_URL = "https://script.google.com/macros/s/AKfycbzN2E0rWT_ZA2CAZ8GIrG63w-QHTcktD4tFL86om_nRFUEjAMKvLGQwzwdqC1E-5tNtrw/exec";
-const CACHE_KEY = "coasterData";
-const CACHE_TIMESTAMP_KEY = "coasterDataTimestamp";
+    // Configuration
+const API_URL = "https://script.google.com/macros/s/AKfycbzc__Z7Wex8sV1G9Ie97KqTbJ4vzNkGj_FXMKabFUmJYFjK3AQu-MVuSQxW_pPSAYG_ZA/exec";
 
 // Elements
 const loaderContainer = document.getElementById('loader-container');
@@ -87,7 +85,6 @@ const toastElement = document.getElementById('toast');
 let allCoasters = [];
 let username = '';
 let authToken = '';
-let isBackgroundLoading = false;
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
@@ -106,109 +103,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update UI with username
     updateUserProfile(username);
     
-    // Set up event listeners
+    // Set up event listeners and fetch coaster data
     setupEventListeners();
-    
-    // Always hide the loader initially
-    loaderContainer.style.display = 'none';
-    
-    // Try to load cached data first
-    const cachedData = loadCachedCoasterData();
-    
-    if (cachedData && cachedData.length > 0) {
-        // If we have cached data, use it immediately
-        allCoasters = cachedData;
-        updateFilterOptions();
-        updateStats(allCoasters);
-        displayCoasters(allCoasters);
-        
-        // Then fetch fresh data in the background
-        fetchCoasterDataInBackground(username);
-    } else {
-        // If no cached data, show loader and fetch
-        loaderContainer.style.display = 'flex';
-        fetchCoasterData(username);
-    }
+    fetchCoasterData(username);
 });
-
-// Make sure fetchCoasterDataInBackground never shows the loader
-function fetchCoasterDataInBackground(username) {
-    // Set background loading flag
-    isBackgroundLoading = true;
-    
-    // Update profile stats to show loading indicator
-    updateProfileStatusWithLoading();
-    
-    // Get auth token from localStorage
-    const authToken = localStorage.getItem('authToken');
-    
-    // Build URL with all parameters
-    let apiUrl = `${API_URL}?user=${username}`;
-    if (authToken) {
-        apiUrl += `&token=${authToken}`;
-    }
-    
-    // Never show the loader for background loading
-    
-    // Simple fetch without showing loader
-    fetch(apiUrl)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log("Background data received:", data);
-            
-            if (!data || data.length === 0) {
-                throw new Error('No coaster data found for this user');
-            }
-            
-            // Check if data has changed
-            const dataChanged = hasDataChanged(allCoasters, data);
-            
-            if (dataChanged) {
-                console.log("Data has changed, updating UI");
-                
-                // Update global data
-                allCoasters = data;
-                
-                // Save to cache
-                saveCoasterDataToCache(data);
-                
-                // Update UI
-                updateFilterOptions();
-                updateStats(allCoasters);
-                displayCoasters(allCoasters);
-                
-                // Show small notification
-                showToast("Coaster data updated!");
-            } else {
-                console.log("Data hasn't changed");
-            }
-            
-            // Reset background loading flag
-            isBackgroundLoading = false;
-            
-            // Reset profile stats
-            updateProfileStats(allCoasters);
-        })
-        .catch(error => {
-            console.error('Error fetching background data:', error);
-            
-            // Reset background loading flag
-            isBackgroundLoading = false;
-            
-            // Reset profile stats
-            updateProfileStats(allCoasters);
-            
-            // If error is unauthorized, redirect to login
-            if (error.message.includes('401') || error.message.includes('unauthorized')) {
-                logout();
-            }
-        });
-}
 
 // Update profile UI with username
 function updateUserProfile(username) {
@@ -252,40 +150,15 @@ function logout() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('tokenExpiry');
     localStorage.removeItem('userData');
-    localStorage.removeItem(CACHE_KEY);
-    localStorage.removeItem(CACHE_TIMESTAMP_KEY);
     
     // Redirect to login page
     window.location.href = '/login.html';
 }
 
-// Load cached coaster data from localStorage
-function loadCachedCoasterData() {
-    try {
-        const cachedData = localStorage.getItem(CACHE_KEY);
-        if (cachedData) {
-            return JSON.parse(cachedData);
-        }
-    } catch (error) {
-        console.error('Error loading cached data:', error);
-    }
-    return null;
-}
-
-// Save coaster data to localStorage
-function saveCoasterDataToCache(data) {
-    try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-        localStorage.setItem(CACHE_TIMESTAMP_KEY, new Date().toISOString());
-    } catch (error) {
-        console.error('Error saving data to cache:', error);
-    }
-}
-
-// Fetch data from API with visible loader
+// Fetch data from API
 function fetchCoasterData(username) {
     // Show loader
-    loaderContainer.style.display = 'flex';
+    document.getElementById('loader-container').style.display = 'flex';
     
     // Get auth token from localStorage
     const authToken = localStorage.getItem('authToken');
@@ -316,22 +189,19 @@ function fetchCoasterData(username) {
             // Store the data
             allCoasters = data;
             
-            // Save to cache
-            saveCoasterDataToCache(data);
-            
             // Process and display the data
             updateFilterOptions();
             updateStats(allCoasters);
             displayCoasters(allCoasters);
             
             // Hide loader
-            loaderContainer.style.display = 'none';
+            document.getElementById('loader-container').style.display = 'none';
         })
         .catch(error => {
             console.error('Error fetching data:', error);
             
             // Hide loader
-            loaderContainer.style.display = 'none';
+            document.getElementById('loader-container').style.display = 'none';
             
             // Show error message
             errorMessage.textContent = `Error loading data: ${error.message}`;
@@ -344,129 +214,6 @@ function fetchCoasterData(username) {
         });
 }
 
-// Fetch data in the background without visible loader
-function fetchCoasterDataInBackground(username) {
-    // Set background loading flag
-    isBackgroundLoading = true;
-    
-    // Update profile stats to show loading indicator
-    updateProfileStatusWithLoading();
-    
-    // Get auth token from localStorage
-    const authToken = localStorage.getItem('authToken');
-    
-    // Build URL with all parameters
-    let apiUrl = `${API_URL}?user=${username}`;
-    if (authToken) {
-        apiUrl += `&token=${authToken}`;
-    }
-    
-    // Simple fetch without showing loader
-    fetch(apiUrl)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log("Background data received:", data);
-            
-            if (!data || data.length === 0) {
-                throw new Error('No coaster data found for this user');
-            }
-            
-            // Check if data has changed
-            const dataChanged = hasDataChanged(allCoasters, data);
-            
-            if (dataChanged) {
-                console.log("Data has changed, updating UI");
-                
-                // Update global data
-                allCoasters = data;
-                
-                // Save to cache
-                saveCoasterDataToCache(data);
-                
-                // Update UI
-                updateFilterOptions();
-                updateStats(allCoasters);
-                displayCoasters(allCoasters);
-                
-                // Show small notification
-                showToast("Coaster data updated!");
-            } else {
-                console.log("Data hasn't changed");
-            }
-            
-            // Reset background loading flag
-            isBackgroundLoading = false;
-            
-            // Reset profile stats
-            updateProfileStats(allCoasters);
-        })
-        .catch(error => {
-            console.error('Error fetching background data:', error);
-            
-            // Reset background loading flag
-            isBackgroundLoading = false;
-            
-            // Reset profile stats
-            updateProfileStats(allCoasters);
-            
-            // If error is unauthorized, redirect to login
-            if (error.message.includes('401') || error.message.includes('unauthorized')) {
-                logout();
-            }
-        });
-}
-
-// Update profile status with loading indicator
-function updateProfileStatusWithLoading() {
-    if (profileStatsElement) {
-        const stats = allCoasters.length ? `${allCoasters.length} coasters in ${[...new Set(allCoasters.map(c => c.Park).filter(Boolean))].length} parks` : '';
-        profileStatsElement.textContent = `${stats} • getting coasters...`;
-    }
-}
-
-// Update profile stats without loading indicator
-function updateProfileStats(coasters) {
-    if (profileStatsElement) {
-        const uniqueParks = new Set(coasters.map(c => c.Park).filter(Boolean));
-        profileStatsElement.textContent = `${coasters.length} coasters in ${uniqueParks.size} parks`;
-    }
-}
-
-// Check if data has changed
-function hasDataChanged(oldData, newData) {
-    if (!oldData || !newData) return true;
-    if (oldData.length !== newData.length) return true;
-    
-    // Create maps for faster comparison
-    const oldMap = new Map();
-    oldData.forEach(coaster => {
-        oldMap.set(coaster.Name, coaster);
-    });
-    
-    // Check if any coaster has changed
-    for (const newCoaster of newData) {
-        const oldCoaster = oldMap.get(newCoaster.Name);
-        
-        if (!oldCoaster) return true;
-        
-        // Check if any key property has changed
-        if (newCoaster.Ride !== oldCoaster.Ride ||
-            newCoaster.Park !== oldCoaster.Park ||
-            newCoaster.Manufacturer !== oldCoaster.Manufacturer ||
-            newCoaster.Model !== oldCoaster.Model ||
-            newCoaster.ImgUrl !== oldCoaster.ImgUrl) {
-            return true;
-        }
-    }
-    
-    return false;
-}
-
 // Update filter options based on available data
 function updateFilterOptions() {
     // Clear existing options (keep the first "All" option)
@@ -475,7 +222,7 @@ function updateFilterOptions() {
     
     // Get unique parks and manufacturers
     const parks = [...new Set(allCoasters.map(c => c.Park).filter(Boolean))].sort();
-    const manufacturers = [...new Set(allCoasters.map(c => c.Manufacturer).filter(Boolean))].sort();
+    const manufacturers = [...new Set(allCoasters.map(c => c.Manufacteuer).filter(Boolean))].sort();
     
     // Add options to filters
     parks.forEach(park => {
@@ -509,7 +256,7 @@ function updateStats(coasters) {
     // Find top manufacturer
     const manufacturerCounts = {};
     coasters.forEach(coaster => {
-        const manufacturer = coaster.Manufacturer;
+        const manufacturer = coaster.Manufacteuer;
         if (manufacturer) {
             manufacturerCounts[manufacturer] = (manufacturerCounts[manufacturer] || 0) + 1;
         }
@@ -528,151 +275,104 @@ function updateStats(coasters) {
     topManufacturerElement.textContent = topManufacturer;
     
     // Update profile stats
-    if (!isBackgroundLoading) {
-        updateProfileStats(coasters);
-    }
+    profileStatsElement.textContent = `${coasters.length} coasters in ${uniqueParks.size} parks`;
 }
+
 // Display coasters in the grid
-// Display coasters grouped by park
-// Display coasters grouped by park in park cards
 function displayCoasters(coasters) {
     // Clear the grid
     coasterGrid.innerHTML = '';
-
-    // Add "Add Coaster" button
-    const addCoasterButton = document.createElement('div');
-    addCoasterButton.className = 'add-coaster-button';
-    addCoasterButton.innerHTML = `
-        <a href="/import">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            Add Coaster
-        </a>
-    `;
-    coasterGrid.appendChild(addCoasterButton);
-
+    
     if (coasters.length === 0) {
         errorMessage.textContent = 'No coasters found matching your criteria';
         errorMessage.style.display = 'block';
         return;
     }
-
+    
     // Hide any error message
     errorMessage.style.display = 'none';
-
-    // Group coasters by park
-    const coastersByPark = coasters.reduce((groups, coaster) => {
-        const park = coaster.Park || 'Unknown Park';
-        if (!groups[park]) {
-            groups[park] = [];
+    
+    // Sort coasters by park name
+    coasters.sort((a, b) => {
+        if (a.Park !== b.Park) return a.Park.localeCompare(b.Park);
+        return a.Name.localeCompare(b.Name);
+    });
+    
+    // Create a card for each coaster
+    coasters.forEach((coaster, index) => {
+        const card = document.createElement('div');
+        card.className = 'coaster-card';
+        card.style.setProperty('--index', index);
+        
+        // Create the image section or placeholder
+        const imageDiv = document.createElement('div');
+        imageDiv.className = 'coaster-image';
+        
+        if (coaster.ImgUrl) {
+            imageDiv.style.backgroundImage = `url(${coaster.ImgUrl})`;
+        } else {
+            imageDiv.classList.add('no-image');
+            imageDiv.textContent = 'No Image';
         }
-        groups[park].push(coaster);
-        return groups;
-    }, {});
-
-    // Iterate through parks and create park cards
-    Object.entries(coastersByPark).forEach(([parkName, parkCoasters], parkIndex) => {
-        // Create park card
-        const parkCard = document.createElement('div');
-        parkCard.className = 'park-card';
-        parkCard.style.setProperty('--index', parkIndex);
-
-        // Create park header
-        const parkHeader = document.createElement('div');
-        parkHeader.className = 'park-header';
-        parkHeader.textContent = parkName;
-        parkCard.appendChild(parkHeader);
-
-        // Create coaster container within the park card
-        const coastersContainer = document.createElement('div');
-        coastersContainer.className = 'coasters-container';
-
-        // Sort coasters within the park by name
-        parkCoasters.sort((a, b) => a.Name.localeCompare(b.Name));
-
-        // Create cards for coasters in this park
-        parkCoasters.forEach((coaster, index) => {
-            const card = document.createElement('div');
-            card.className = 'coaster-card';
-            card.style.setProperty('--index', index);
-
-            card.addEventListener('click', () => {
-                window.location.href = `/details?coaster=${encodeURIComponent(coaster.Name)}`;
-            });
-
-            // Create the image section or placeholder
-            const imageDiv = document.createElement('div');
-            imageDiv.className = 'coaster-image';
-
-            if (coaster.ImgUrl) {
-                imageDiv.style.backgroundImage = `url(${coaster.ImgUrl})`;
-            } else {
-                imageDiv.classList.add('no-image');
-                imageDiv.textContent = 'No Image';
-            }
-
-            // Create ride counter with increment button
-            const rideCounter = document.createElement('div');
-            rideCounter.className = 'ride-counter';
-
-            const rideCount = document.createElement('span');
-            rideCount.textContent = `${coaster.Ride || 0}x`;
-
-            const incrementButton = document.createElement('button');
-            incrementButton.className = 'increment-button';
-            incrementButton.textContent = '+';
-            incrementButton.onclick = (e) => {
-                e.stopPropagation();
-                incrementRide(coaster);
-            };
-
-            rideCounter.appendChild(rideCount);
-            rideCounter.appendChild(incrementButton);
-            imageDiv.appendChild(rideCounter);
-
-            // Create details section
-            const detailsDiv = document.createElement('div');
-            detailsDiv.className = 'coaster-details';
-
-            const nameDiv = document.createElement('div');
-            nameDiv.className = 'coaster-name';
-            nameDiv.textContent = coaster.Name || 'Unknown Coaster';
-
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'coaster-info';
-
-            const manufacturerSpan = document.createElement('span');
-            manufacturerSpan.textContent = coaster.Manufacturer || 'Unknown';
-
-            const modelSpan = document.createElement('span');
-            modelSpan.textContent = coaster.Model || '';
-
-            infoDiv.appendChild(manufacturerSpan);
-            if (coaster.Model) {
-                infoDiv.appendChild(document.createTextNode(' · '));
-                infoDiv.appendChild(modelSpan);
-            }
-
-            // Assemble the card
-            detailsDiv.appendChild(nameDiv);
-            detailsDiv.appendChild(infoDiv);
-
-            card.appendChild(imageDiv);
-            card.appendChild(detailsDiv);
-
-            // Add card to coasters container
-            coastersContainer.appendChild(card);
-        });
-
-        // Add coasters container to park card
-        parkCard.appendChild(coastersContainer);
-
-        // Add park card to grid
-        coasterGrid.appendChild(parkCard);
+        
+        // Create ride counter with increment button
+        const rideCounter = document.createElement('div');
+        rideCounter.className = 'ride-counter';
+        
+        const rideCount = document.createElement('span');
+        rideCount.textContent = `${coaster.Ride || 0}x`;
+        
+        const incrementButton = document.createElement('button');
+        incrementButton.className = 'increment-button';
+        incrementButton.textContent = '+';
+        incrementButton.onclick = (e) => {
+            e.stopPropagation();
+            incrementRide(coaster);
+        };
+        
+        rideCounter.appendChild(rideCount);
+        rideCounter.appendChild(incrementButton);
+        imageDiv.appendChild(rideCounter);
+        
+        // Create details section
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'coaster-details';
+        
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'coaster-name';
+        nameDiv.textContent = coaster.Name || 'Unknown Coaster';
+        
+        const parkDiv = document.createElement('div');
+        parkDiv.className = 'coaster-park';
+        parkDiv.textContent = coaster.Park || 'Unknown Park';
+        
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'coaster-info';
+        
+        const manufacturerSpan = document.createElement('span');
+        manufacturerSpan.textContent = coaster.Manufacteuer || 'Unknown';
+        
+        const modelSpan = document.createElement('span');
+        modelSpan.textContent = coaster.Model || '';
+        
+        infoDiv.appendChild(manufacturerSpan);
+        if (coaster.Model) {
+            infoDiv.appendChild(document.createTextNode(' · '));
+            infoDiv.appendChild(modelSpan);
+        }
+        
+        // Assemble the card
+        detailsDiv.appendChild(nameDiv);
+        detailsDiv.appendChild(parkDiv);
+        detailsDiv.appendChild(infoDiv);
+        
+        card.appendChild(imageDiv);
+        card.appendChild(detailsDiv);
+        
+        coasterGrid.appendChild(card);
     });
 }
+
 // Function to increment ride count
 function incrementRide(coaster) {
     // Get button element and replace with spinner
@@ -714,20 +414,10 @@ function incrementRide(coaster) {
         .then(data => {
             console.log("Increment response:", data);
     
-            // Check the 'status' field in the response
+            // Überprüfen Sie das 'status'-Feld in der Antwort
             if (data && data.status === "success") {
                 // Update the coaster object
                 coaster.Ride = data.newCount;
-    
-                // Update cache with the new ride count
-                const cachedData = loadCachedCoasterData();
-                if (cachedData) {
-                    const coasterIndex = cachedData.findIndex(c => c.Name === coaster.Name);
-                    if (coasterIndex !== -1) {
-                        cachedData[coasterIndex].Ride = data.newCount;
-                        saveCoasterDataToCache(cachedData);
-                    }
-                }
     
                 // Find the ride counter for this coaster
                 if (targetButton) {
@@ -784,7 +474,7 @@ function filterCoasters() {
         const matchesPark = !selectedPark || coaster.Park === selectedPark;
         
         // Check if the coaster matches the selected manufacturer
-        const manufacturer = coaster.Manufacturer || '';
+        const manufacturer = coaster.Manufacteuer || '';
         const matchesManufacturer = !selectedManufacturer || manufacturer === selectedManufacturer;
         
         return matchesSearch && matchesPark && matchesManufacturer;
