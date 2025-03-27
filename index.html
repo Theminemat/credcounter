@@ -534,6 +534,7 @@ function updateStats(coasters) {
 }
 // Display coasters in the grid
 // Display coasters grouped by park
+// Display coasters grouped by park in park cards
 function displayCoasters(coasters) {
     // Clear the grid
     coasterGrid.innerHTML = '';
@@ -542,8 +543,8 @@ function displayCoasters(coasters) {
     const addCoasterButton = document.createElement('div');
     addCoasterButton.className = 'add-coaster-button';
     addCoasterButton.innerHTML = `
-        <a href="/import" class="add-coaster-link">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a href="/import">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
@@ -571,14 +572,22 @@ function displayCoasters(coasters) {
         return groups;
     }, {});
 
-    // Iterate through parks and create sections
+    // Iterate through parks and create park cards
     Object.entries(coastersByPark).forEach(([parkName, parkCoasters], parkIndex) => {
+        // Create park card
+        const parkCard = document.createElement('div');
+        parkCard.className = 'park-card';
+        parkCard.style.setProperty('--index', parkIndex);
+
         // Create park header
         const parkHeader = document.createElement('div');
         parkHeader.className = 'park-header';
         parkHeader.textContent = parkName;
-        parkHeader.style.setProperty('--index', parkIndex);
-        coasterGrid.appendChild(parkHeader);
+        parkCard.appendChild(parkHeader);
+
+        // Create coaster container within the park card
+        const coastersContainer = document.createElement('div');
+        coastersContainer.className = 'coasters-container';
 
         // Sort coasters within the park by name
         parkCoasters.sort((a, b) => a.Name.localeCompare(b.Name));
@@ -589,8 +598,6 @@ function displayCoasters(coasters) {
             card.className = 'coaster-card';
             card.style.setProperty('--index', index);
 
-            // Rest of the card creation remains the same as in the original function
-            // (Using the previous card creation logic here)
             card.addEventListener('click', () => {
                 window.location.href = `/details?coaster=${encodeURIComponent(coaster.Name)}`;
             });
@@ -617,7 +624,7 @@ function displayCoasters(coasters) {
             incrementButton.className = 'increment-button';
             incrementButton.textContent = '+';
             incrementButton.onclick = (e) => {
-                e.stopPropagation(); // Prevent the card click event from firing
+                e.stopPropagation();
                 incrementRide(coaster);
             };
 
@@ -655,13 +662,15 @@ function displayCoasters(coasters) {
             card.appendChild(imageDiv);
             card.appendChild(detailsDiv);
 
-            coasterGrid.appendChild(card);
+            // Add card to coasters container
+            coastersContainer.appendChild(card);
         });
 
-        // Add a spacer between park sections
-        const spacer = document.createElement('div');
-        spacer.className = 'park-section-spacer';
-        coasterGrid.appendChild(spacer);
+        // Add coasters container to park card
+        parkCard.appendChild(coastersContainer);
+
+        // Add park card to grid
+        coasterGrid.appendChild(parkCard);
     });
 }
 // Function to increment ride count
